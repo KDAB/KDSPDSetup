@@ -5,7 +5,10 @@ project(kdspdsetup LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(kdspdsetup main.cpp
+add_executable(kdspdsetup
+    main.cpp
+    kdspdsetup.h
+    kdspdsetup.cpp
     example.toml)
 
 find_package(spdlog)
