@@ -14,7 +14,7 @@
 #include <spdlog/sinks/msvc_sink.h>
 
 #include <spdlog/async.h>
-// #include <spdlog/async_logger.h>
+#include <spdlog/async_logger.h>
 #include <spdlog/pattern_formatter.h>
 
 #include <toml.hpp>
@@ -23,7 +23,7 @@ int main()
 {
     auto const data = toml::parse("/home/sus/kdab/kdspdsetup/example.toml");
 
-    auto const stdstrs    = std::string{"stdout_sink_st stdout_sink_mt color_stdout_sink_st color_stdout_sink_mt"};
+    auto const stdstrs    = std::string{"stdout_sink_st stdout_sink_mt stdout_color_sink_st stdout_color_sink_mt"};
     auto const filestrs   = std::string{"basic_file_sink_st basic_file_sink_mt"};
     auto const rotatestrs = std::string{"rotating_file_sink_st rotating_file_sink_mt"};
     auto const dailystrs  = std::string{"daily_file_sink_st daily_file_sink_mt"};
@@ -42,7 +42,12 @@ int main()
         {"warn",     spdlog::level::level_enum::warn},
     };
 
-    auto const in_typelist = [](std::string const &typestr, std::string const &str) {
+    static auto overflowmap = std::map<toml::string, spdlog::async_overflow_policy>{
+        {"overrun_oldest", spdlog::async_overflow_policy::overrun_oldest},
+        {"block",          spdlog::async_overflow_policy::block},
+    };
+
+    static auto const in_typelist = [](std::string const &typestr, std::string const &str) {
         return str.find(typestr) != std::string::npos;
     };
 
@@ -55,33 +60,30 @@ int main()
     for (auto sinktb : sinks) {
         spdlog::sink_ptr sinkp;
 
-        toml::value const name = sinktb["name"];
-        toml::value const type = sinktb["type"];
-        auto const typestr = type.as_string();
+        auto const name = sinktb["name"].as_string();
+        auto const typestr = sinktb["type"].as_string();
 
         if (in_typelist(typestr, filestrs) || in_typelist(typestr, rotatestrs) || in_typelist(typestr, dailystrs)) {
-            toml::value const level = sinktb["level"];
-
-            toml::value const trunct = (sinktb.count("truncate") != 0)
-                    ? sinktb["truncate"]
+            auto const trunct = (sinktb.count("truncate") != 0)
+                    ? sinktb["truncate"].as_boolean()
                     : false;
 
             if (in_typelist(typestr, filestrs)) {
-                toml::value const filename = sinktb["filename"];
+                auto const filename = sinktb["filename"].as_string();
                 
-                toml::value const create_parent_dir = (sinktb.count("create_parent_dir") != 0)
-                        ? sinktb["create_parent_dir"]
+                auto const create_parent_dir = (sinktb.count("create_parent_dir") != 0)
+                        ? sinktb["create_parent_dir"].as_boolean()
                         : false;
 
                 if (typestr == "basic_file_sink_st") {
                     sinkp = std::make_shared<spdlog::sinks::basic_file_sink_st>(
-                        filename.as_string(),
-                        trunct.as_boolean()
+                        filename,
+                        trunct
                     );
                 } else {
                     sinkp = std::make_shared<spdlog::sinks::basic_file_sink_st>(
-                        filename.as_string(),
-                        trunct.as_boolean()
+                        filename,
+                        trunct
                     );
                 }
                 
@@ -90,14 +92,16 @@ int main()
                 //
 
             } else if (in_typelist(typestr, rotatestrs) || in_typelist(typestr, dailystrs)) {
-                toml::value const base_filename = sinktb["base_filename"];
-                toml::value const max_files     = (sinktb.count("max_files") != 0) ? sinktb["max_files"] : 0;
+                auto const base_filename = sinktb["base_filename"].as_string();
+                auto const max_files = (sinktb.count("max_files") != 0)
+                    ? sinktb["max_files"].as_integer()
+                    : 0;
             
                 if (in_typelist(typestr, rotatestrs)) {
-                    toml::value const max_size  = sinktb["max_size"];
+                    auto const max_size  = sinktb["max_size"];
                     
                     auto const max_size_str = static_cast<std::string>(max_size.as_string());
-                    char const max_size_str_back = max_size_str.back();
+                    auto const max_size_str_back = max_size_str.back();
                     size_t max_size_int;
                     
                     if (std::string{"TGMK"}.find(max_size_str_back) != std::string::npos) {
@@ -122,47 +126,51 @@ int main()
                     
                     if (typestr == "rotating_file_sink_st") {
                         sinkp = std::make_shared<spdlog::sinks::rotating_file_sink_st>(
-                            base_filename.as_string(),
+                            base_filename,
                             max_size_int,
-                            max_files.as_integer()
+                            max_files
                         );
                     } else {
                         sinkp = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-                            base_filename.as_string(),
+                            base_filename,
                             max_size_int,
-                            max_files.as_integer()
+                            max_files
                         );
                     }
                 }
 
                 if (in_typelist(typestr, dailystrs)) {
-                    toml::value const rotation_hour   = sinktb["rotation_hour"];
-                    toml::value const rotation_minute = sinktb["rotation_minute"];
-                    toml::value const trunct = (sinktb.count("truncate") != 0)
-                        ? sinktb["truncate"]
+                    auto const rotation_hour   = sinktb["rotation_hour"].as_integer();
+                    auto const rotation_minute = sinktb["rotation_minute"].as_integer();
+                    
+                    auto const trunct = (sinktb.count("truncate") != 0)
+                        ? sinktb["truncate"].as_boolean()
                         : false;
 
                     if (typestr == "daily_file_sink_st") {
                         sinkp = std::make_shared<spdlog::sinks::daily_file_sink_st>(
-                            base_filename.as_string(),
-                            rotation_hour.as_integer(),
-                            rotation_minute.as_integer(),
-                            trunct.as_boolean(),
-                            max_files.as_integer()
+                            base_filename,
+                            rotation_hour,
+                            rotation_minute,
+                            trunct,
+                            max_files
                         );
                     } else {
                         sinkp = std::make_shared<spdlog::sinks::daily_file_sink_mt>(
-                            base_filename.as_string(),
-                            rotation_hour.as_integer(),
-                            rotation_minute.as_integer(),
-                            trunct.as_boolean(),
-                            max_files.as_integer()
+                            base_filename,
+                            rotation_hour,
+                            rotation_minute,
+                            trunct,
+                            max_files
                         );
                     }
                 }
             }
 
-            sinkp->set_level(levelmap[level.as_string()]);
+            if (sinktb.count("level") != 0) {
+                auto const level = sinktb["level"].as_string();
+                sinkp->set_level(levelmap[level]);
+            }
 
         } else if (in_typelist(typestr, nullstrs) || in_typelist(typestr, stdstrs)) {
             if (typestr == "null_sink_st")
@@ -173,7 +181,7 @@ int main()
                 sinkp = std::make_shared<spdlog::sinks::stdout_sink_st>();
             else if (typestr == "stdout_sink_mt")
                 sinkp = std::make_shared<spdlog::sinks::stdout_sink_st>();
-            else if (typestr == "color_stdout_sink_st")
+            else if (typestr == "stdout_color_sink_st")
                 sinkp = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
             else
                 sinkp = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -181,33 +189,35 @@ int main()
         
         #ifdef __linux__
         else if (in_typelist(typestr, linuxstrs)) {
-            toml::value const ident = (sinktb.count("ident") != 0)
-                ? sinktb["ident"]
+            auto const ident = (sinktb.count("ident") != 0)
+                ? sinktb["ident"].as_string()
                 : "";
 
-            toml::value const syslog_option = (sinktb.count("syslog_option") != 0)
-                ? sinktb["syslog_option"]
+            auto const syslog_option = (sinktb.count("syslog_option") != 0)
+                ? sinktb["syslog_option"].as_integer()
                 : 0;
 
-            toml::value const syslog_facility = (sinktb.count("syslog_facility") != 0)
-                ? sinktb["syslog_facility"]
-                : LOG_USER;
+            // auto const syslog_facility = (sinktb.count("syslog_facility") != 0)
+            //     ? sinktb["syslog_facility"].as_integer()    // this is actually a macro, needs work
+            //     : LOG_USER;
 
-            toml::value const enable_formatting = true; // not sure if this is correct
+            bool const enable_formatting = true; // not sure if this is correct
 
             if (typestr == "syslog_sink_st") {
                 sinkp = std::make_shared<spdlog::sinks::syslog_sink_st>(
-                    ident.as_string(),
-                    syslog_option.as_integer(),
-                    syslog_facility.as_integer(),
-                    enable_formatting.as_boolean()
+                    ident,
+                    syslog_option,
+                    LOG_USER,
+                    // syslog_facility,    // this is actually a macro, needs work
+                    enable_formatting
                 );
             } else {
                 sinkp = std::make_shared<spdlog::sinks::syslog_sink_mt>(
-                    ident.as_string(),
-                    syslog_option.as_integer(),
-                    syslog_facility.as_integer(),
-                    enable_formatting.as_boolean()
+                    ident,
+                    syslog_option,
+                    LOG_USER,
+                    // syslog_facility,    // this is actually a macro, needs work
+                    enable_formatting
                 );
             }
         } 
@@ -220,61 +230,115 @@ int main()
         }
         #endif
     
-        sinkmap.emplace(std::make_pair(name.as_string(), sinkp));
+        sinkmap.emplace(std::make_pair(name, sinkp));
     }
 
-    auto const global_pattern = toml::find<toml::string>(data, "global_pattern");
+    if (data.count("global_pattern") != 0) {
+        auto const global_pattern = toml::find<toml::string>(data, "global_pattern");
+        spdlog::set_pattern(global_pattern);
+    }
 
     auto const patterns = toml::find<std::vector<toml::table>>(data, "pattern");
     
     for (auto pattb : patterns) {
-        toml::value const name  = pattb["name"];
-        toml::value const value = pattb["value"];
+        auto const name  = pattb["name"].as_string();
+        auto const value = pattb["value"].as_string();
         
-        patternmap.emplace(std::make_pair(name.as_string(), value.as_string()));
+        patternmap.emplace(std::make_pair(name, value));
     }
 
-    auto const global_thread_pool = toml::find<toml::string>(data, "global_thread_pool");
+    if (data.count("global_thread_pool") != 0) {
+        auto const global_thread_pool = toml::find(data, "global_thread_pool");
+        spdlog::init_thread_pool(toml::find<toml::integer>(global_thread_pool, "queue_size"),
+                                 toml::find<toml::integer>(global_thread_pool, "num_threads"));
+    }
 
-    auto const thread_pools = toml::find<std::vector<toml::table>>(data, "thread_pools");
+    auto const thread_pools = toml::find<std::vector<toml::table>>(data, "thread_pool");
     
     for (auto pooltb : thread_pools) {
-        toml::value const name        = pooltb["name"];
-        toml::value const queue_size  = pooltb["queue_size"];
-        toml::value const num_threads = pooltb["num_threads"];
+        auto const name        = pooltb["name"].as_string();
+        auto const queue_size  = pooltb["queue_size"].as_integer();
+        auto const num_threads = pooltb["num_threads"].as_integer();
         
         threadpoolmap.emplace(std::make_pair(
-                name.as_string(), 
-                std::make_pair(queue_size.as_integer(), num_threads.as_integer())
+            name, 
+            std::make_pair(queue_size, num_threads)
         ));
     }
 
     auto const loggers = toml::find<std::vector<toml::table>>(data, "logger");
     for (auto logtb : loggers) {
-        toml::value const name = logtb["name"];
-        toml::array const sinks = logtb["sinks"].as_array();
+        auto const name  = logtb["name"].as_string();
+        auto const sinks = logtb["sinks"].as_array();
+        
         auto sinklist = std::vector<spdlog::sink_ptr>{};
         for (auto sink : sinks) {
-            sinklist.emplace_back(sinkmap[name.as_string()]);
+            sinklist.emplace_back(sinkmap[sink.as_string()]);
         }
-        // optional
-        toml::value const pattern = logtb.count("pattern") != 0 ? logtb["pattern"] : global_pattern;
-        toml::value const level   = logtb.count("level")   != 0 ? logtb["level"]   : /**/;
-        toml::value const type    = logtb.count("type")    != 0 ? logtb["type"]    : /**/;
-        // async only
-        toml::value const thread_pool = logtb["thread_pool"];
-        toml::value const overflow_policy = logtb["overflow_policy"];
-
-        auto log = spdlog::logger{name.as_string(), sinklist.cbegin(), sinklist.cend()};
-        log.set_level(levelmap[level.as_string()]);
-        log.set_pattern(pattern.as_string());
         
-        // and what about async?
-        // note from example.toml: level is optional for both sinks and loggers
+        auto const pattern = (logtb.count("pattern") != 0)
+            ? patternmap[logtb["pattern"].as_string()]
+            : "";
 
-        // reference links
-        // https://github.com/ToruNiina/toml11#checking-value-type
-        // https://github.com/guangie88/spdlog_setup
-        // https://github.com/gabime/spdlog
+        auto const type = (logtb.count("type") != 0)
+            ? logtb["type"].as_string()
+            : "";
+
+        if (type == "async") {
+            auto const thread_pool = (logtb.count("thread_pool") != 0)
+                ? logtb["thread_pool"].as_string()
+                : "";
+
+            std::shared_ptr<spdlog::details::thread_pool> tp;
+
+            if (thread_pool != "") {
+                auto const pr = threadpoolmap[thread_pool];
+                auto const queue_size  = pr.first;
+                auto const num_threads = pr.second;
+                tp = std::make_shared<spdlog::details::thread_pool>(queue_size, num_threads);
+            } else {
+                tp = spdlog::thread_pool();
+            }
+
+            auto const overflow_policy = (logtb.count("overflow_policy") != 0)
+                ? logtb["overflow_policy"].as_string()
+                : "block";
+            
+            auto log = std::make_shared<spdlog::async_logger>(
+                name,
+                sinklist.begin(), sinklist.end(),
+                tp,
+                overflowmap[overflow_policy]
+            );
+            if (pattern != "")
+                log->set_pattern(pattern);
+
+            spdlog::register_logger(log);
+        }
+
+        else {
+            auto log = std::make_shared<spdlog::logger>(name, sinklist.cbegin(), sinklist.cend());
+            if (pattern != "") {
+                std::string pats = pattern;
+                log->set_pattern(pats);
+            }
+                
+
+            if (logtb.count("level") != 0) {
+                auto const level = logtb["level"].as_string();
+                log->set_level(levelmap[level]);
+            }
+
+            spdlog::register_logger(log);
+        }
     }
 }
+
+
+
+
+
+// reference links
+// https://github.com/ToruNiina/toml11#checking-value-type
+// https://github.com/guangie88/spdlog_setup
+// https://github.com/gabime/spdlog
