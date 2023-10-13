@@ -5,7 +5,15 @@ project(kdspdsetup LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(kdspdsetup main.cpp)
+add_executable(kdspdsetup main.cpp
+    example.toml)
+
+find_package(spdlog)
+find_package(fmt)
+
+add_subdirectory(toml11)
+
+target_link_libraries(kdspdsetup toml11 spdlog fmt)
 
 include(GNUInstallDirs)
 install(TARGETS kdspdsetup
