@@ -21,7 +21,11 @@
 #include <toml.hpp>
 
 class KDSPDSetup {
-    inline static auto const stdstrs    = std::string{"stdout_sink_st stdout_sink_mt stdout_color_sink_st stdout_color_sink_mt"};
+    inline static auto const stdstrs = std::string{" \
+        stdout_sink_st stdout_sink_mt stdout_color_sink_st \
+        stdout_color_sink_mt color_stdout_sink_st color_stdout_sink_mt \
+    "};
+    
     inline static auto const filestrs   = std::string{"basic_file_sink_st basic_file_sink_mt"};
     inline static auto const rotatestrs = std::string{"rotating_file_sink_st rotating_file_sink_mt"};
     inline static auto const dailystrs  = std::string{"daily_file_sink_st daily_file_sink_mt"};

@@ -148,7 +148,7 @@ KDSPDSetup::setup_sinks (
                 sinkp = std::make_shared<spdlog::sinks::stdout_sink_st>();
             else if (typestr == "stdout_sink_mt")
                 sinkp = std::make_shared<spdlog::sinks::stdout_sink_st>();
-            else if (typestr == "stdout_color_sink_st")
+            else if (typestr == "stdout_color_sink_st" or typestr == "color_stdout_sink_st")
                 sinkp = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
             else
                 sinkp = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -211,13 +211,15 @@ KDSPDSetup::setup_patterns (
         spdlog::set_pattern(global_pattern);
     }
 
-    auto const patterns = toml::find<std::vector<toml::table>>(data, "pattern");
+    if (data.count("patterns") != 0) {
+        auto const patterns = toml::find<std::vector<toml::table>>(data, "pattern");
 
-    for (auto pattb : patterns) {
-        auto const name  = pattb["name"].as_string();
-        auto const value = pattb["value"].as_string();
-        
-        patternmap.emplace(std::make_pair(name, value));
+        for (auto pattb : patterns) {
+            auto const name  = pattb["name"].as_string();
+            auto const value = pattb["value"].as_string();
+            
+            patternmap.emplace(std::make_pair(name, value));
+        }
     }
 }
 
@@ -232,17 +234,19 @@ KDSPDSetup::setup_threadpools (
                                     toml::find<toml::integer>(global_thread_pool, "num_threads"));
     }
 
-    auto const thread_pools = toml::find<std::vector<toml::table>>(data, "thread_pool");
+    if (data.count("thread_pool") != 0) {
+        auto const thread_pools = toml::find<std::vector<toml::table>>(data, "thread_pool");
 
-    for (auto pooltb : thread_pools) {
-        auto const name        = pooltb["name"].as_string();
-        auto const queue_size  = pooltb["queue_size"].as_integer();
-        auto const num_threads = pooltb["num_threads"].as_integer();
-        
-        threadpoolmap.emplace(std::make_pair(
-            name, 
-            std::make_pair(queue_size, num_threads)
-        ));
+        for (auto pooltb : thread_pools) {
+            auto const name        = pooltb["name"].as_string();
+            auto const queue_size  = pooltb["queue_size"].as_integer();
+            auto const num_threads = pooltb["num_threads"].as_integer();
+
+            threadpoolmap.emplace(std::make_pair(
+                name, 
+                std::make_pair(queue_size, num_threads)
+            ));
+        }
     }
 }
 
