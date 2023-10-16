@@ -1,4 +1,6 @@
-#include "kdspdsetup.h"
+#include "../include/kdspdsetup/kdspdsetup.h"
+
+namespace KDSPDSetup {
 
 void KDSPDSetup::setup_from (std::string const &file) {
     auto const data = toml::parse(file);
@@ -326,3 +328,5 @@ KDSPDSetup::setup_loggers (
         }
     }
 }
+
+} // end namespace

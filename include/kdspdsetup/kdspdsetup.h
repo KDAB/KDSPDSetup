@@ -20,6 +20,8 @@
 
 #include <toml.hpp>
 
+namespace KDSPDSetup {
+
 class KDSPDSetup {
     inline static auto const stdstrs = std::string{" \
         stdout_sink_st stdout_sink_mt stdout_color_sink_st \
@@ -78,3 +80,5 @@ class KDSPDSetup {
 public:
     static void setup_from (std::string const &);
 };
+
+} // end namespace
