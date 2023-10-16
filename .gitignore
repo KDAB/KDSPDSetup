@@ -2,5 +2,4 @@ CMakeLists.txt.user
 .vscode/
 build/
 log/
-example.toml
-main.cpp
+lib/toml11/
