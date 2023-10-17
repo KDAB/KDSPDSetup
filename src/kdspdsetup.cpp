@@ -20,12 +20,12 @@ KDSPDSetup::setup_sinks (
     toml::value const &data,
     std::map<toml::string, spdlog::sink_ptr> &sinkmap)
 {
-    auto const sinks = toml::find<std::vector<toml::table>>(data, "sink");
+    auto const &sinks = toml::find<std::vector<toml::table>>(data, "sink");
 
     for (auto sinktb : sinks) {
         spdlog::sink_ptr sinkp;
 
-        auto const name = sinktb["name"].as_string();
+        auto const name    = sinktb["name"].as_string();
         auto const typestr = sinktb["type"].as_string();
 
         if (in_typelist(typestr, filestrs)   or 
@@ -140,7 +140,7 @@ KDSPDSetup::setup_sinks (
             }
 
         }
-        
+
         else if (in_typelist(typestr, nullstrs) or in_typelist(typestr, stdstrs)) {
             if (typestr == "null_sink_st")
                 sinkp = std::make_shared<spdlog::sinks::null_sink_st>();
@@ -155,7 +155,7 @@ KDSPDSetup::setup_sinks (
             else
                 sinkp = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         }
-        
+
         #ifdef __linux__
         else if (in_typelist(typestr, linuxstrs)) {
             auto const ident = (sinktb.count("ident") != 0)
@@ -166,9 +166,9 @@ KDSPDSetup::setup_sinks (
                 ? sinktb["syslog_option"].as_integer()
                 : 0;
 
-            // auto const syslog_facility = (sinktb.count("syslog_facility") != 0)
-            //     ? sinktb["syslog_facility"].as_integer()    // this is actually a macro, needs work
-            //     : LOG_USER;
+            auto const syslog_facility = (sinktb.count("syslog_facility") != 0)
+                ? sinktb["syslog_facility"].as_integer() // this is actually a macro
+                : LOG_USER;
 
             bool const enable_formatting = true; // not sure if this is correct
 
@@ -176,16 +176,14 @@ KDSPDSetup::setup_sinks (
                 sinkp = std::make_shared<spdlog::sinks::syslog_sink_st>(
                     ident,
                     syslog_option,
-                    LOG_USER,
-                    // syslog_facility,    // this is actually a macro, needs work
+                    syslog_facility, // this is actually a macro
                     enable_formatting
                 );
             } else {
                 sinkp = std::make_shared<spdlog::sinks::syslog_sink_mt>(
                     ident,
                     syslog_option,
-                    LOG_USER,
-                    // syslog_facility,    // this is actually a macro, needs work
+                    syslog_facility, // this is actually a macro, needs work
                     enable_formatting
                 );
             }
@@ -232,8 +230,11 @@ KDSPDSetup::setup_threadpools (
 {
     if (data.count("global_thread_pool") != 0) {
         auto const global_thread_pool = toml::find(data, "global_thread_pool");
-        spdlog::init_thread_pool(toml::find<toml::integer>(global_thread_pool, "queue_size"),
-                                    toml::find<toml::integer>(global_thread_pool, "num_threads"));
+        
+        spdlog::init_thread_pool(
+            toml::find<toml::integer>(global_thread_pool, "queue_size"),
+            toml::find<toml::integer>(global_thread_pool, "num_threads")
+        );
     }
 
     if (data.count("thread_pool") != 0) {
@@ -245,7 +246,7 @@ KDSPDSetup::setup_threadpools (
             auto const num_threads = pooltb["num_threads"].as_integer();
 
             threadpoolmap.emplace(std::make_pair(
-                name, 
+                name,
                 std::make_pair(queue_size, num_threads)
             ));
         }
@@ -282,7 +283,7 @@ KDSPDSetup::setup_loggers (
                 ? logtb["thread_pool"].as_string()
                 : "";
 
-            std::shared_ptr<spdlog::details::thread_pool> tp;
+            static std::shared_ptr<spdlog::details::thread_pool> tp;
 
             if (thread_pool != "") {
                 auto const pr = threadpoolmap[thread_pool];
@@ -303,7 +304,7 @@ KDSPDSetup::setup_loggers (
             auto log = std::make_shared<spdlog::async_logger>(
                 name,
                 sinklist.begin(), sinklist.end(),
-                tp,
+                std::move(tp),
                 overflowmap.at(overflow_policy)
             );
 
