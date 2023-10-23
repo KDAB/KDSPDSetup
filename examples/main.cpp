@@ -2,8 +2,8 @@
 #include <iostream>
 
 int main() {
-    KDToolBox::KDSPDSetup::setup_from (
-        "/home/sus/kdab/kdspdsetup/examples/example.toml"
+    KDSPDSetup::KDSPDSetup::setup_from (
+        "../examples/example.toml" // from build directory
     );
     
     auto logger_root = spdlog::get("root");

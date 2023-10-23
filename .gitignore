@@ -2,4 +2,3 @@ CMakeLists.txt.user
 .vscode/
 build/
 log/
-lib/toml11/

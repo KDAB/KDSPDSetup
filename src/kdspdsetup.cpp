@@ -28,8 +28,8 @@ KDSPDSetup::setup_sinks (
         auto const name    = sinktb["name"].as_string();
         auto const typestr = sinktb["type"].as_string();
 
-        if (in_typelist(typestr, filestrs)   or 
-            in_typelist(typestr, rotatestrs) or 
+        if (in_typelist(typestr, filestrs)   ||
+            in_typelist(typestr, rotatestrs) || 
             in_typelist(typestr, dailystrs))
         {
             auto const trunct = (sinktb.count("truncate") != 0)
@@ -38,10 +38,6 @@ KDSPDSetup::setup_sinks (
 
             if (in_typelist(typestr, filestrs)) {
                 auto const filename = sinktb["filename"].as_string();
-                
-                auto const create_parent_dir = (sinktb.count("create_parent_dir") != 0)
-                        ? sinktb["create_parent_dir"].as_boolean()
-                        : false;
 
                 if (typestr == "basic_file_sink_st") {
                     sinkp = std::make_shared<spdlog::sinks::basic_file_sink_st>(
@@ -54,10 +50,6 @@ KDSPDSetup::setup_sinks (
                         trunct
                     );
                 }
-                
-                //
-                // create parent dir????
-                //
 
             } else if (in_typelist(typestr, rotatestrs) or in_typelist(typestr, dailystrs)) {
                 auto const base_filename = sinktb["base_filename"].as_string();
@@ -167,23 +159,23 @@ KDSPDSetup::setup_sinks (
                 : 0;
 
             auto const syslog_facility = (sinktb.count("syslog_facility") != 0)
-                ? sinktb["syslog_facility"].as_integer() // this is actually a macro
-                : LOG_USER;
+                ? sinktb["syslog_facility"].as_integer()
+                : LOG_USER;             // macro
 
-            bool const enable_formatting = true; // not sure if this is correct
+            bool const enable_formatting = true;
 
             if (typestr == "syslog_sink_st") {
                 sinkp = std::make_shared<spdlog::sinks::syslog_sink_st>(
                     ident,
                     syslog_option,
-                    syslog_facility, // this is actually a macro
+                    syslog_facility,    // macro
                     enable_formatting
                 );
             } else {
                 sinkp = std::make_shared<spdlog::sinks::syslog_sink_mt>(
                     ident,
                     syslog_option,
-                    syslog_facility, // this is actually a macro, needs work
+                    syslog_facility,    // macro
                     enable_formatting
                 );
             }
