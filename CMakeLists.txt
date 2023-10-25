@@ -1,24 +1,36 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(kdspdsetup LANGUAGES CXX)
+project(kdspdsetup LANGUAGES CXX
+                   VERSION 0.1)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(kdspdsetup
-    examples/main.cpp
-    include/kdspdsetup/kdspdsetup.h
-    src/kdspdsetup.cpp)
+option(BUILD_TESTS "Build unit tests" ON)
+option(BUILD_EXAMPLES "Build the example project" ON)
 
 find_package(spdlog)
 find_package(fmt)
+add_subdirectory(lib/toml11)
 
-add_subdirectory("lib/toml11")
+set(LINKLIBS spdlog fmt toml11)
+if (BUILD_TESTS)
+    add_subdirectory(lib/doctest)
+    list(APPEND LINKLIBS doctest)
+endif()
 
-target_link_libraries(kdspdsetup toml11 spdlog fmt)
+include_directories(kdspdsetup include)
+add_library(kdspdsetup SHARED src/kdspdsetup.cpp)
 
-include(GNUInstallDirs)
-install(TARGETS kdspdsetup
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+target_link_libraries(kdspdsetup
+    ${LINKLIBS}
 )
+
+if (BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+if (BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()

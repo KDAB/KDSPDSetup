@@ -1,4 +1,4 @@
-#include "../include/kdspdsetup/kdspdsetup.h"
+#include "../include/kdspdsetup.h"
 
 namespace KDSPDSetup
 {
@@ -199,17 +199,22 @@ void KDSPDSetup::setup_sink(std::map<toml::string, spdlog::sink_ptr> &sinkmap, t
         sinkp = create_null_or_std_sink_ptr(typestr);
     }
 
-#ifdef __linux__
     else if (in_typelist(typestr, linux_strs))
     {
+#ifdef __linux__
         sinkp = create_syslog_sink_ptr(typestr, sinktb);
-    }
-#elif _WIN32
-    else if (in_typelist(typestr, winstrs))
-    {
-        sinkp = create_msvc_sink_ptr(typestr);
-    }
+#else
+        return;
 #endif
+    }
+    else if (in_typelist(typestr, win_strs))
+    {
+#ifdef _WIN32
+        sinkp = create_msvc_sink_ptr(typestr);
+#else
+        return;
+#endif
+    }
 
     sinkmap.emplace(std::make_pair(name, sinkp));
 }
@@ -253,8 +258,9 @@ void KDSPDSetup::setup_threadpools(toml::value const &data,
     {
         auto const global_thread_pool = toml::find(data, "global_thread_pool");
 
-        spdlog::init_thread_pool(toml::find<toml::integer>(global_thread_pool, "queue_size"),
-                                 toml::find<toml::integer>(global_thread_pool, "num_threads"));
+        auto const qsize = static_cast<size_t>(toml::find<toml::integer>(global_thread_pool, "queue_size"));
+        auto const nthreads = static_cast<size_t>(toml::find<toml::integer>(global_thread_pool, "num_threads"));
+        spdlog::init_thread_pool(qsize, nthreads);
     }
 
     if (data.contains("thread_pool"))
@@ -331,12 +337,20 @@ void KDSPDSetup::setup_logger(toml::table const &logtb, std::map<toml::string, s
                               std::map<toml::string, std::pair<toml::integer, toml::integer>> const &threadpoolmap)
 {
     auto const name = logtb.at("name").as_string();
+    if (spdlog::get(name) != nullptr)
+    {
+        return;
+    }
+
     auto const sinks = logtb.at("sinks").as_array();
 
     auto sinklist = std::vector<spdlog::sink_ptr>{};
     for (auto &&sink : sinks)
     {
-        sinklist.emplace_back(sinkmap.at(sink.as_string()));
+        if (sinkmap.contains(sink.as_string()))
+        {
+            sinklist.emplace_back(sinkmap.at(sink.as_string()));
+        }
     }
 
     auto const pattern = (logtb.contains("pattern")) ? patternmap.at(logtb.at("pattern").as_string()) : "";

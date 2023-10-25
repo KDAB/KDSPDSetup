@@ -1,9 +1,8 @@
-#include "../include/kdspdsetup/kdspdsetup.h"
-#include <iostream>
+#include <kdspdsetup.h>
 
 int main()
 {
-    KDSPDSetup::KDSPDSetup::setup_from("../examples/example.toml"); // from build directory
+    KDSPDSetup::KDSPDSetup::setup_from("example.toml");
 
     for (std::string &&name : {"root", "console", "global_async", "local_async"})
     {
