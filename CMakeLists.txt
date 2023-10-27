@@ -20,7 +20,7 @@ if (BUILD_TESTS)
 endif()
 
 include_directories(kdspdsetup include)
-add_library(kdspdsetup SHARED src/kdspdsetup.cpp)
+add_library(kdspdsetup SHARED src/kdspdsetup.cpp src/details.cpp src/setup.cpp)
 
 target_link_libraries(kdspdsetup
     ${LINKLIBS}

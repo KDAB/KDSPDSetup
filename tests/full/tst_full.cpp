@@ -1,16 +1,9 @@
-#include <kdspdsetup.h>
-
 #include "../conf.h"
 #include <doctest/doctest.h>
 
-TEST_SUITE("Tests for full.toml")
+TEST_SUITE("Tests for full-win32.toml and full-linux.toml")
 {
-    void setup()
-    {
-        KDSPDSetup::KDSPDSetup::setup_from("full.toml");
-    }
-
-    TEST_CASE("Setup")
+    TEST_CASE("full-win32 Setup")
     {
         SUBCASE("No loggers should be created yet.")
         {
@@ -20,7 +13,7 @@ TEST_SUITE("Tests for full.toml")
             CHECK(spdlog::get("local_async") == nullptr);
         }
 
-        setup();
+        setup("full-win32.toml");
 
         SUBCASE("All loggers should be created.")
         {
@@ -31,7 +24,7 @@ TEST_SUITE("Tests for full.toml")
         }
     }
 
-    TEST_CASE("Root Logger")
+    TEST_CASE("full-win32 Root logger")
     {
         SUBCASE("Root logger should still exist.")
         {
@@ -55,7 +48,7 @@ TEST_SUITE("Tests for full.toml")
         }
     }
 
-    TEST_CASE("Console Logger")
+    TEST_CASE("Console logger")
     {
         SUBCASE("Console logger should still exist.")
         {
@@ -97,6 +90,67 @@ TEST_SUITE("Tests for full.toml")
         SUBCASE("Global async logger should have only one sink.")
         {
             CHECK(logger_local_async->sinks().size() == 1);
+        }
+    }
+
+    TEST_CASE("Drop loggers and full-linux setup")
+    {
+        spdlog::drop("root");
+        spdlog::drop("console");
+        spdlog::drop("global_async");
+        spdlog::drop("local_async");
+        
+        SUBCASE("Loggers should no longer exist")
+        {
+            CHECK(spdlog::get("root") == nullptr);
+            CHECK(spdlog::get("console") == nullptr);
+            CHECK(spdlog::get("global_async") == nullptr);
+            CHECK(spdlog::get("local_async") == nullptr);
+        }
+
+        setup("full-linux.toml");
+
+        SUBCASE("All loggers should be re-created.")
+        {
+            CHECK(spdlog::get("root") != nullptr);
+            CHECK(spdlog::get("console") != nullptr);
+            CHECK(spdlog::get("global_async") != nullptr);
+            CHECK(spdlog::get("local_async") != nullptr);
+        }
+    }
+
+    TEST_CASE("full-linux Root logger")
+    {
+        SUBCASE("Root logger should still exist.")
+        {
+            CHECK(spdlog::get("root") != nullptr);
+        }
+
+        auto logger = spdlog::get("root");
+
+        SUBCASE("Root logger should have 14 sinks on Linux and 12 on Windows.")
+        {
+#ifdef __linux__
+            CHECK(logger->sinks().size() == 14);
+#elif _WIN32
+            CHECK(logger->sinks().size() == 12);
+#endif
+        }
+    }
+
+    TEST_CASE("Drop loggers")
+    {
+        spdlog::drop("root");
+        spdlog::drop("console");
+        spdlog::drop("global_async");
+        spdlog::drop("local_async");
+        
+        SUBCASE("Loggers should no longer exist")
+        {
+            CHECK(spdlog::get("root") == nullptr);
+            CHECK(spdlog::get("console") == nullptr);
+            CHECK(spdlog::get("global_async") == nullptr);
+            CHECK(spdlog::get("local_async") == nullptr);
         }
     }
 }

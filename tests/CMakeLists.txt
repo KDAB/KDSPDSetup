@@ -13,3 +13,5 @@ function(add_kdspdsetup_test NAME SOURCES)
 endfunction()
 
 add_subdirectory(full)
+add_subdirectory(pre)
+add_subdirectory(internals)

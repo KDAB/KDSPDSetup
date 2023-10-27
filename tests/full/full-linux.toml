@@ -1,0 +1,123 @@
+global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
+
+[[sink]]
+name = "console_st"
+type = "stdout_sink_st"
+
+[[sink]]
+name = "console_mt"
+type = "stdout_sink_mt"
+
+[[sink]]
+name = "color_console_st"
+type = "color_stdout_sink_st"
+
+[[sink]]
+name = "color_console_mt"
+type = "color_stdout_sink_mt"
+
+[[sink]]
+name = "file_out"
+type = "basic_file_sink_st"
+filename = "log/spdlog_setup.log"
+level = "info"
+create_parent_dir = true
+
+[[sink]]
+name = "file_err"
+type = "basic_file_sink_mt"
+filename = "log/spdlog_setup_err.log"
+truncate = true
+level = "err"
+
+[[sink]]
+name = "rotate_out"
+type = "rotating_file_sink_st"
+base_filename = "log/rotate_spdlog_setup.log"
+max_size = "1M"
+max_files = 10
+level = "info"
+
+[[sink]]
+name = "rotate_err"
+type = "rotating_file_sink_mt"
+base_filename = "log/rotate_spdlog_setup_err.log"
+max_size = "1M"
+max_files = 10
+level = "err"
+
+[[sink]]
+name = "daily_out"
+type = "daily_file_sink_st"
+base_filename = "log/daily_spdlog_setup.log"
+rotation_hour = 17
+rotation_minute = 30
+level = "info"
+
+[[sink]]
+name = "daily_err"
+type = "daily_file_sink_mt"
+base_filename = "log/daily_spdlog_setup_err.log"
+rotation_hour = 17
+rotation_minute = 30
+level = "err"
+
+[[sink]]
+name = "null_sink_st"
+type = "null_sink_st"
+
+[[sink]]
+name = "null_sink_mt"
+type = "null_sink_mt"
+
+[[sink]]
+name = "syslog_st"
+type = "syslog_sink_st"
+
+[[sink]]
+name = "syslog_mt"
+type = "syslog_sink_mt"
+
+[[pattern]]
+name = "succient"
+value = "%c-%L: %v"
+
+[[logger]]
+name = "root"
+sinks = [
+    "console_st", "console_mt",
+    "color_console_st", "color_console_mt",
+    "daily_out", "daily_err",
+    "file_out", "file_err",
+    "rotate_out", "rotate_err",
+    "null_sink_st", "null_sink_mt",
+    "syslog_st", "syslog_mt"]
+level = "trace"
+
+[[logger]]
+name = "console"
+sinks = ["console_st", "console_mt"]
+pattern = "succient"
+
+[global_thread_pool]
+queue_size = 8192
+num_threads = 1
+
+[[thread_pool]]
+name = "tp"
+queue_size = 4096
+num_threads = 2
+
+[[logger]]
+type = "async"
+name = "global_async"
+sinks = ["console_mt"]
+pattern = "succient"
+
+[[logger]]
+type = "async"
+name = "local_async"
+sinks = ["console_mt"]
+pattern = "succient"
+thread_pool = "tp"
+overflow_policy = "overrun_oldest"  # block (default) | overrun_oldest

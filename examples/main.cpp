@@ -2,7 +2,7 @@
 
 int main()
 {
-    KDSPDSetup::KDSPDSetup::setup_from("example.toml");
+    KDSPDSetup::setup_from("example.toml");
 
     for (std::string &&name : {"root", "console", "global_async", "local_async"})
     {
