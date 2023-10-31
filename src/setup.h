@@ -2,10 +2,9 @@
 
 #include "details.h"
 
-namespace KDSPDSetup::setup
-{
+namespace KDSPDSetup::setup {
 
-void handle_multifiles(toml::string &&typestr, toml::table const &sinktb, spdlog::sink_ptr &sinkp, bool const &trunct);
+void handle_multifiles(toml::string &&typestr, toml::table &&sinktb, spdlog::sink_ptr &sinkp, bool const &trunct);
 
 void handle_truncatable(toml::string &&typestr, toml::table &&sinktb, spdlog::sink_ptr &sinkp);
 
@@ -27,4 +26,4 @@ void setup_logger(toml::table const &logtb);
 
 void setup_loggers(toml::value const &data);
 
-} // namespace KDSPDSetup
+} // namespace KDSPDSetup::setup

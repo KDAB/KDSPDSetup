@@ -99,7 +99,7 @@ TEST_SUITE("Tests for full-win32.toml and full-linux.toml")
         spdlog::drop("console");
         spdlog::drop("global_async");
         spdlog::drop("local_async");
-        
+
         SUBCASE("Loggers should no longer exist")
         {
             CHECK(spdlog::get("root") == nullptr);
@@ -144,7 +144,7 @@ TEST_SUITE("Tests for full-win32.toml and full-linux.toml")
         spdlog::drop("console");
         spdlog::drop("global_async");
         spdlog::drop("local_async");
-        
+
         SUBCASE("Loggers should no longer exist")
         {
             CHECK(spdlog::get("root") == nullptr);

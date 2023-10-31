@@ -4,8 +4,7 @@ int main()
 {
     KDSPDSetup::setup_from("example.toml");
 
-    for (std::string &&name : {"root", "console", "global_async", "local_async"})
-    {
+    for (std::string &&name : { "root", "console", "global_async", "local_async" }) {
         auto logger = spdlog::get(name);
         auto message = fmt::format("hello {}", name);
         logger->debug(message);

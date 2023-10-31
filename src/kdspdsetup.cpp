@@ -1,8 +1,7 @@
 #include "../include/kdspdsetup.h"
 #include "setup.h"
 
-namespace KDSPDSetup
-{
+namespace KDSPDSetup {
 
 void setup_from(std::string const &file)
 {
@@ -14,4 +13,4 @@ void setup_from(std::string const &file)
     setup::setup_loggers(data);
 }
 
-} // end namespace
+} // namespace KDSPDSetup

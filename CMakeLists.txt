@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_TESTS "Build unit tests" ON)
 option(BUILD_EXAMPLES "Build the example project" ON)
+option(BUILD_STATIC "Build as a static library" OFF)
 
 find_package(spdlog)
 find_package(fmt)
@@ -20,7 +21,11 @@ if (BUILD_TESTS)
 endif()
 
 include_directories(kdspdsetup include)
-add_library(kdspdsetup SHARED src/kdspdsetup.cpp src/details.cpp src/setup.cpp)
+if (BUILD_STATIC)
+    add_library(kdspdsetup STATIC src/kdspdsetup.cpp src/details.cpp src/setup.cpp)
+else()
+    add_library(kdspdsetup SHARED src/kdspdsetup.cpp src/details.cpp src/setup.cpp)
+endif()
 
 target_link_libraries(kdspdsetup
     ${LINKLIBS}
