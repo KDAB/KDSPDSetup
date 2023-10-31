@@ -4,32 +4,32 @@
 
 TEST_SUITE("Tests for internals")
 {
-    auto const typelists = { KDSPDSetup::details::std_strs, KDSPDSetup::details::file_strs,
-                             KDSPDSetup::details::rotate_strs, KDSPDSetup::details::daily_strs,
-                             KDSPDSetup::details::null_strs, KDSPDSetup::details::linux_strs,
-                             KDSPDSetup::details::win_strs };
+    auto const typeLists = { KDSPDSetup::details::stdStrs, KDSPDSetup::details::fileStrs,
+                             KDSPDSetup::details::rotateStrs, KDSPDSetup::details::dailyStrs,
+                             KDSPDSetup::details::nullStrs, KDSPDSetup::details::linuxStrs,
+                             KDSPDSetup::details::winStrs };
 
-    void check_only_in(std::string && typestr, std::vector<std::string> const &should_be_in)
+    void checkOnlyIn(std::string && typeStr, std::vector<std::string> const &shouldBeIn)
     {
-        for (auto &&typ : typelists) {
-            if (typ == should_be_in) {
-                CHECK(KDSPDSetup::details::in_typelist(typestr, typ));
+        for (auto &&type : typeLists) {
+            if (type == shouldBeIn) {
+                CHECK(KDSPDSetup::details::inTypelist(typeStr, type));
             } else {
-                CHECK(!KDSPDSetup::details::in_typelist(typestr, typ));
+                CHECK(!KDSPDSetup::details::inTypelist(typeStr, type));
             }
         }
     }
 
-    TEST_CASE("Check that in_typelist returns true and false as expected.")
+    TEST_CASE("Check that inTypelist returns true and false as expected.")
     {
         SUBCASE("No partial strings")
         {
-            CHECK(!KDSPDSetup::details::in_typelist("file", KDSPDSetup::details::file_strs));
+            CHECK(!KDSPDSetup::details::inTypelist("file", KDSPDSetup::details::fileStrs));
         }
 
-        SUBCASE("std_strs")
+        SUBCASE("stdStrs")
         {
-            auto test_strs = {
+            auto testStrs = {
                 "stdout_sink_st",
                 "stdout_sink_mt",
                 "stdout_color_sink_st",
@@ -37,56 +37,56 @@ TEST_SUITE("Tests for internals")
                 "color_stdout_sink_st",
                 "color_stdout_sink_mt",
             };
-            for (auto &&str : test_strs) {
-                check_only_in(str, KDSPDSetup::details::std_strs);
+            for (auto &&str : testStrs) {
+                checkOnlyIn(str, KDSPDSetup::details::stdStrs);
             }
         }
 
-        SUBCASE("file_strs")
+        SUBCASE("fileStrs")
         {
-            auto test_strs = { "basic_file_sink_st", "basic_file_sink_mt" };
-            for (auto &&str : test_strs) {
-                check_only_in(str, KDSPDSetup::details::file_strs);
+            auto testStrs = { "basic_file_sink_st", "basic_file_sink_mt" };
+            for (auto &&str : testStrs) {
+                checkOnlyIn(str, KDSPDSetup::details::fileStrs);
             }
         }
 
-        SUBCASE("rotate_strs")
+        SUBCASE("rotateStrs")
         {
-            auto test_strs = { "rotating_file_sink_st", "rotating_file_sink_mt" };
-            for (auto &&str : test_strs) {
-                check_only_in(str, KDSPDSetup::details::rotate_strs);
+            auto testStrs = { "rotating_file_sink_st", "rotating_file_sink_mt" };
+            for (auto &&str : testStrs) {
+                checkOnlyIn(str, KDSPDSetup::details::rotateStrs);
             }
         }
 
-        SUBCASE("daily_strs")
+        SUBCASE("dailyStrs")
         {
-            auto test_strs = { "daily_file_sink_st", "daily_file_sink_mt" };
-            for (auto &&str : test_strs) {
-                check_only_in(str, KDSPDSetup::details::daily_strs);
+            auto testStrs = { "daily_file_sink_st", "daily_file_sink_mt" };
+            for (auto &&str : testStrs) {
+                checkOnlyIn(str, KDSPDSetup::details::dailyStrs);
             }
         }
 
-        SUBCASE("null_strs")
+        SUBCASE("nullStrs")
         {
-            auto test_strs = { "null_sink_st", "null_sink_mt" };
-            for (auto &&str : test_strs) {
-                check_only_in(str, KDSPDSetup::details::null_strs);
+            auto testStrs = { "null_sink_st", "null_sink_mt" };
+            for (auto &&str : testStrs) {
+                checkOnlyIn(str, KDSPDSetup::details::nullStrs);
             }
         }
 
-        SUBCASE("linux_strs")
+        SUBCASE("linuxStrs")
         {
-            auto test_strs = { "syslog_sink_st", "syslog_sink_mt" };
-            for (auto &&str : test_strs) {
-                check_only_in(str, KDSPDSetup::details::linux_strs);
+            auto testStrs = { "syslog_sink_st", "syslog_sink_mt" };
+            for (auto &&str : testStrs) {
+                checkOnlyIn(str, KDSPDSetup::details::linuxStrs);
             }
         }
 
-        SUBCASE("win_strs")
+        SUBCASE("winStrs")
         {
-            auto test_strs = { "msvc_sink_st", "msvc_sink_mt" };
-            for (auto &&str : test_strs) {
-                check_only_in(str, KDSPDSetup::details::win_strs);
+            auto testStrs = { "msvc_sink_st", "msvc_sink_mt" };
+            for (auto &&str : testStrs) {
+                checkOnlyIn(str, KDSPDSetup::details::winStrs);
             }
         }
     }
@@ -95,22 +95,22 @@ TEST_SUITE("Tests for internals")
     {
         SUBCASE("create_rotating_file_sink_st_ptr")
         {
-            toml::table tbl{ { "name", "rotate_out" },
-                             { "type", "rotating_file_sink_st" },
-                             { "base_filename", "log/rotate_spdlog_setup.log" },
-                             { "max_size", "1M" },
-                             { "max_files", 10 },
-                             { "level", "info" } };
+            toml::table table{ { "name", "rotate_out" },
+                               { "type", "rotating_file_sink_st" },
+                               { "base_filename", "log/rotate_spdlog_setup.log" },
+                               { "max_size", "1M" },
+                               { "max_files", 10 },
+                               { "level", "info" } };
 
-            auto move_tuple_base_filename = tbl.at("base_filename").as_string();
-            auto max_files = tbl.at("max_files").as_integer();
+            auto moveTupleBaseFileName = table.at("base_filename").as_string();
+            auto maxFiles = table.at("max_files").as_integer();
 
-            auto move_sink_base_filename = move_tuple_base_filename;
+            auto moveSinkBaseFileName = moveTupleBaseFileName;
 
             SUBCASE("tuple")
             {
-                auto tup = KDSPDSetup::details::create_rotating_file_sink_tuple(
-                        tbl, std::move(move_tuple_base_filename), max_files);
+                auto tup = KDSPDSetup::details::createRotatingFileSinkTuple(
+                        table, std::move(moveTupleBaseFileName), maxFiles);
 
                 CHECK(std::get<0>(tup) == "log/rotate_spdlog_setup.log");
                 CHECK(std::get<1>(tup) == std::size_t{ 1048576 });
@@ -119,37 +119,37 @@ TEST_SUITE("Tests for internals")
 
             SUBCASE("sink_ptr")
             {
-                auto snk = KDSPDSetup::details::create_rotating_file_sink_st_ptr(
-                        tbl, std::move(move_sink_base_filename), max_files); // still debugging, this needs rewrite
+                auto sink = KDSPDSetup::details::createRotatingFileSinkStPtr(
+                        table, std::move(moveSinkBaseFileName), maxFiles); // still debugging, this needs rewrite
 
-                CHECK(typeid(snk) == typeid(std::shared_ptr<spdlog::sinks::rotating_file_sink_st>));
-                CHECK(snk->filename() == "log/rotate_spdlog_setup.log");
+                CHECK(typeid(sink) == typeid(std::shared_ptr<spdlog::sinks::rotating_file_sink_st>));
+                CHECK(sink->filename() == "log/rotate_spdlog_setup.log");
 
-                auto const level = tbl.at("level").as_string();
-                snk->set_level(KDSPDSetup::details::level_map.at(level));
+                auto const level = table.at("level").as_string();
+                sink->set_level(KDSPDSetup::details::levelMap.at(level));
 
-                CHECK(snk->level() == spdlog::level::info);
+                CHECK(sink->level() == spdlog::level::info);
             }
         }
 
         SUBCASE("create_rotating_file_sink_mt_ptr")
         {
-            toml::table tbl{ { "name", "rotate_err" },
-                             { "type", "rotating_file_sink_mt" },
-                             { "base_filename", "log/rotate_spdlog_setup_err.log" },
-                             { "max_size", "1M" },
-                             { "max_files", 10 },
-                             { "level", "err" } };
+            toml::table table{ { "name", "rotate_err" },
+                               { "type", "rotating_file_sink_mt" },
+                               { "base_filename", "log/rotate_spdlog_setup_err.log" },
+                               { "max_size", "1M" },
+                               { "max_files", 10 },
+                               { "level", "err" } };
 
-            auto move_tuple_base_filename = tbl.at("base_filename").as_string();
-            auto max_files = tbl.at("max_files").as_integer();
+            auto moveTupleBaseFileName = table.at("base_filename").as_string();
+            auto maxFiles = table.at("max_files").as_integer();
 
-            auto move_sink_base_filename = move_tuple_base_filename;
+            auto moveSinkBaseFileName = moveTupleBaseFileName;
 
             SUBCASE("tuple")
             {
-                auto tup = KDSPDSetup::details::create_rotating_file_sink_tuple(
-                        tbl, std::move(move_tuple_base_filename), max_files);
+                auto tup = KDSPDSetup::details::createRotatingFileSinkTuple(
+                        table, std::move(moveTupleBaseFileName), maxFiles);
 
                 CHECK(std::get<0>(tup) == "log/rotate_spdlog_setup_err.log");
                 CHECK(std::get<1>(tup) == std::size_t{ 1048576 });
@@ -158,74 +158,74 @@ TEST_SUITE("Tests for internals")
 
             SUBCASE("sink_ptr")
             {
-                auto snk = KDSPDSetup::details::create_rotating_file_sink_mt_ptr(
-                        tbl, std::move(move_sink_base_filename), max_files); // still debugging, this needs rewrite
+                auto sink = KDSPDSetup::details::createRotatingFileSinkMtPtr(
+                        table, std::move(moveSinkBaseFileName), maxFiles); // still debugging, this needs rewrite
 
-                CHECK(typeid(snk) == typeid(std::shared_ptr<spdlog::sinks::rotating_file_sink_mt>));
-                CHECK(snk->filename() == "log/rotate_spdlog_setup_err.log");
+                CHECK(typeid(sink) == typeid(std::shared_ptr<spdlog::sinks::rotating_file_sink_mt>));
+                CHECK(sink->filename() == "log/rotate_spdlog_setup_err.log");
 
-                auto const level = tbl.at("level").as_string();
-                snk->set_level(KDSPDSetup::details::level_map.at(level));
+                auto const level = table.at("level").as_string();
+                sink->set_level(KDSPDSetup::details::levelMap.at(level));
 
-                CHECK(snk->level() == spdlog::level::err);
+                CHECK(sink->level() == spdlog::level::err);
             }
         }
     }
 
-    TEST_CASE("create_file_sink_ptr")
+    TEST_CASE("createFileSinkPtr")
     {
         SUBCASE("create_file_sink_st_ptr")
         {
-            toml::table tbl{ { "name", "file_out" },
-                             { "type", "basic_file_sink_st" },
-                             { "filename", "log/spdlog_setup.log" },
-                             { "level", "info" },
-                             { "create_parent_dir", true } };
+            toml::table table{ { "name", "file_out" },
+                               { "type", "basic_file_sink_st" },
+                               { "filename", "log/spdlog_setup.log" },
+                               { "level", "info" },
+                               { "create_parent_dir", true } };
 
-            auto const trunct = (tbl.contains("truncate")) ? tbl.at("truncate").as_boolean() : false;
-            auto tup = KDSPDSetup::details::create_file_sink_tuple(tbl, trunct);
+            auto const trunct = (table.contains("truncate")) ? table.at("truncate").as_boolean() : false;
+            auto tup = KDSPDSetup::details::createFileSinkTuple(table, trunct);
 
             CHECK(std::get<0>(tup) == "log/spdlog_setup.log");
             CHECK(std::get<1>(tup) == false);
 
-            auto snk = KDSPDSetup::details::create_file_sink_st_ptr(tbl, trunct);
+            auto sink = KDSPDSetup::details::createFileSinkStPtr(table, trunct);
 
-            CHECK(typeid(snk) == typeid(std::shared_ptr<spdlog::sinks::basic_file_sink_st>));
-            CHECK(snk->filename() == "log/spdlog_setup.log");
+            CHECK(typeid(sink) == typeid(std::shared_ptr<spdlog::sinks::basic_file_sink_st>));
+            CHECK(sink->filename() == "log/spdlog_setup.log");
 
-            auto const level = tbl.at("level").as_string();
-            snk->set_level(KDSPDSetup::details::level_map.at(level));
+            auto const level = table.at("level").as_string();
+            sink->set_level(KDSPDSetup::details::levelMap.at(level));
 
-            CHECK(snk->level() == spdlog::level::info);
+            CHECK(sink->level() == spdlog::level::info);
         }
 
         SUBCASE("create_file_sink_mt_ptr")
         {
-            toml::table const tbl{ { "name", "file_err" },
-                                   { "type", "basic_file_sink_mt" },
-                                   { "filename", "log/spdlog_setup_err.log" },
-                                   { "truncate", true },
-                                   { "level", "err" } };
+            toml::table const table{ { "name", "file_err" },
+                                     { "type", "basic_file_sink_mt" },
+                                     { "filename", "log/spdlog_setup_err.log" },
+                                     { "truncate", true },
+                                     { "level", "err" } };
 
-            auto const trunct = (tbl.contains("truncate")) ? tbl.at("truncate").as_boolean() : false;
-            auto tup = KDSPDSetup::details::create_file_sink_tuple(tbl, trunct);
+            auto const trunct = (table.contains("truncate")) ? table.at("truncate").as_boolean() : false;
+            auto tup = KDSPDSetup::details::createFileSinkTuple(table, trunct);
 
             CHECK(std::get<0>(tup) == "log/spdlog_setup_err.log");
             CHECK(std::get<1>(tup) == true);
 
-            auto snk = KDSPDSetup::details::create_file_sink_mt_ptr(tbl, trunct);
+            auto sink = KDSPDSetup::details::createFileSinkMtPtr(table, trunct);
 
-            CHECK(typeid(snk) == typeid(std::shared_ptr<spdlog::sinks::basic_file_sink_mt>));
-            CHECK(snk->filename() == "log/spdlog_setup_err.log");
+            CHECK(typeid(sink) == typeid(std::shared_ptr<spdlog::sinks::basic_file_sink_mt>));
+            CHECK(sink->filename() == "log/spdlog_setup_err.log");
 
-            auto const level = tbl.at("level").as_string();
-            snk->set_level(KDSPDSetup::details::level_map.at(level));
+            auto const level = table.at("level").as_string();
+            sink->set_level(KDSPDSetup::details::levelMap.at(level));
 
-            CHECK(snk->level() == spdlog::level::err);
+            CHECK(sink->level() == spdlog::level::err);
         }
     }
 
-    TEST_CASE("create_daily_file_sink_ptr")
+    TEST_CASE("createDailyFileSinkPtr")
     {
         SUBCASE("") { }
     }
@@ -235,7 +235,7 @@ TEST_SUITE("Tests for internals")
         SUBCASE("") { }
     }
 #ifdef __linux__
-    TEST_CASE("create_syslog_sink_ptr")
+    TEST_CASE("createSyslogSinkPtr")
     {
         SUBCASE("") { }
     }
@@ -245,9 +245,9 @@ TEST_SUITE("Tests for internals")
         SUBCASE("") { }
     }
 #endif
-    TEST_CASE("KDSPDSetup::setup_sink")
+    TEST_CASE("KDSPDSetup::setupSink")
     {
-        // check the sinkmap & such
+        // check the sinkMap & such
     }
 
     // etc...

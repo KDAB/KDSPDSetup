@@ -24,14 +24,14 @@ KDSPDSetup is minimal reimplementation of the unmaintained [spdlog_setup](https:
 library for modern C++ projects.
 
 Given a TOML file containing configuration parameters, `spdlog` loggers for your project can be set up with a single
-call to `KDSPDSetup::setup_from`, as shown below:
+call to `KDSPDSetup::setupFrom`, as shown below:
 
 ```cpp
 #include <kdspdsetup.h>
 
 int main()
 {
-    KDSPDSetup::setup_from("example.toml");
+    KDSPDSetup::setupFrom("example.toml");
 
     auto logger = spdlog::get("root");
     logger->debug("Hello spdlog!");

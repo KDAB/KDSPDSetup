@@ -6,5 +6,5 @@
 
 void setup(std::string &&str)
 {
-    KDSPDSetup::setup_from(str);
+    KDSPDSetup::setupFrom(str);
 }

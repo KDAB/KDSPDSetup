@@ -2,222 +2,222 @@
 
 namespace KDSPDSetup::details {
 
-auto spd_maps::sinkmap() -> std::map<toml::string, spdlog::sink_ptr> const &
+auto SPDMaps::sinkMap() -> std::map<toml::string, spdlog::sink_ptr> const &
 {
-    return m_sinkmap;
+    return mSinkMap;
 }
-auto spd_maps::patternmap() -> std::map<toml::string, toml::string> const &
+auto SPDMaps::patternMap() -> std::map<toml::string, toml::string> const &
 {
-    return m_patternmap;
+    return mPatternMap;
 }
-auto spd_maps::threadpoolmap() -> std::map<toml::string, std::pair<std::size_t, std::size_t>> const &
+auto SPDMaps::threadPoolMap() -> std::map<toml::string, std::pair<std::size_t, std::size_t>> const &
 {
-    return m_threadpoolmap;
+    return mThreadPoolMap;
 }
-void spd_maps::sinkmap_emplace(std::pair<toml::string, spdlog::sink_ptr> &&_pr)
+void SPDMaps::emplaceSinkMap(std::pair<toml::string, spdlog::sink_ptr> &&_pr)
 {
-    m_sinkmap.emplace(_pr);
+    mSinkMap.emplace(_pr);
 }
-void spd_maps::patternmap_emplace(std::pair<toml::string, toml::string> &&_pr)
+void SPDMaps::emplacePatternMap(std::pair<toml::string, toml::string> &&_pr)
 {
-    m_patternmap.emplace(_pr);
+    mPatternMap.emplace(_pr);
 }
-void spd_maps::threadpoolmap_emplace(std::pair<toml::string, std::pair<std::size_t, std::size_t>> &&_pr)
+void SPDMaps::emplaceThreadPoolMap(std::pair<toml::string, std::pair<std::size_t, std::size_t>> &&_pr)
 {
-    m_threadpoolmap.emplace(_pr);
-}
-
-bool in_typelist(std::string const &typestr, std::vector<std::string> const &strlist)
-{
-    return std::find(strlist.cbegin(), strlist.cend(), typestr) != std::cend(strlist);
+    mThreadPoolMap.emplace(_pr);
 }
 
-auto create_rotating_file_sink_tuple(toml::table const &sinktb, toml::string &&base_filename,
-                                     std::size_t const &max_files)
+bool inTypelist(std::string const &typeStr, std::vector<std::string> const &strList)
+{
+    return std::find(strList.cbegin(), strList.cend(), typeStr) != std::cend(strList);
+}
+
+auto createRotatingFileSinkTuple(toml::table const &sinkTable, toml::string &&baseFilename,
+                                 std::size_t const &maxFiles)
         -> std::tuple<toml::string const, std::size_t const, std::size_t const>
 {
-    auto const max_size = static_cast<std::string>(sinktb.at("max_size").as_string());
-    auto const max_size_str_back = max_size.back();
-    std::size_t max_size_int{};
+    auto const maxSize = static_cast<std::string>(sinkTable.at("max_size").as_string());
+    auto const maxSizeStrBack = maxSize.back();
+    std::size_t maxSizeInt{};
 
-    if (std::string{ "TGMK" }.find(max_size_str_back) != std::string::npos) {
-        auto const prefix_str = max_size.substr(0, max_size.size() - 1);
-        max_size_int = std::stoi(prefix_str);
+    if (std::string{ "TGMK" }.find(maxSizeStrBack) != std::string::npos) {
+        auto const prefixStr = maxSize.substr(0, maxSize.size() - 1);
+        maxSizeInt = std::stoi(prefixStr);
 
         std::size_t constexpr kilo = 1024;
         std::size_t constexpr mega = kilo * kilo;
         std::size_t constexpr giga = mega * kilo;
         std::size_t constexpr tera = giga * kilo;
 
-        switch (max_size_str_back) {
+        switch (maxSizeStrBack) {
         case 'T':
-            max_size_int *= tera;
+            maxSizeInt *= tera;
             break;
         case 'G':
-            max_size_int *= giga;
+            maxSizeInt *= giga;
             break;
         case 'M':
-            max_size_int *= mega;
+            maxSizeInt *= mega;
             break;
         case 'K':
-            max_size_int *= kilo;
+            maxSizeInt *= kilo;
             break;
         default:
             break;
         }
     } else {
-        max_size_int = std::stoi(max_size);
+        maxSizeInt = std::stoi(maxSize);
     }
 
-    return std::make_tuple(std::move(base_filename), max_size_int, max_files);
+    return std::make_tuple(std::move(baseFilename), maxSizeInt, maxFiles);
 }
 
 template<typename Mutex>
-auto create_rotating_file_sink_ptr(toml::table const &sinktb, toml::string &&base_filename,
-                                   std::size_t const &max_files)
+auto createRotatingFileSinkPtr(toml::table const &sinkTable, toml::string &&baseFilename,
+                               std::size_t const &maxFiles)
         -> std::shared_ptr<spdlog::sinks::rotating_file_sink<Mutex>>
 {
-    auto tup = create_rotating_file_sink_tuple(sinktb, std::move(base_filename), max_files);
+    auto tup = createRotatingFileSinkTuple(sinkTable, std::move(baseFilename), maxFiles);
     return std::make_shared<spdlog::sinks::rotating_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup),
                                                                       std::get<2>(tup));
 }
 
-auto create_file_sink_tuple(toml::table const &sinktb, bool const &trunct) -> std::tuple<toml::string const, bool const>
+auto createFileSinkTuple(toml::table const &sinkTable, bool const &trunct) -> std::tuple<toml::string const, bool const>
 {
-    auto filename = sinktb.at("filename").as_string();
-    return std::make_tuple(std::move(filename), trunct);
+    auto fileName = sinkTable.at("filename").as_string();
+    return std::make_tuple(std::move(fileName), trunct);
 }
 
 template<typename Mutex>
-auto create_file_sink_ptr(toml::table const &sinktb, bool const &trunct)
+auto createFileSinkPtr(toml::table const &sinkTable, bool const &trunct)
         -> std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>>
 {
-    auto tup = create_file_sink_tuple(sinktb, trunct);
+    auto tup = createFileSinkTuple(sinkTable, trunct);
     return std::make_shared<spdlog::sinks::basic_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup));
 }
 
-auto create_daily_file_sink_tuple(toml::table &&sinktb, bool const &trunct, toml::string &&base_filename,
-                                  std::size_t const &max_files)
+auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
+                              std::size_t const &maxFiles)
         -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const, int const>
 {
-    auto rotation_hour = sinktb.at("rotation_hour").as_integer();
-    auto rotation_minute = sinktb.at("rotation_minute").as_integer();
+    auto rotationHour = sinkTable.at("rotation_hour").as_integer();
+    auto rotationMinute = sinkTable.at("rotation_minute").as_integer();
 
-    return std::make_tuple(std::move(base_filename), rotation_hour, rotation_minute, trunct, max_files);
+    return std::make_tuple(std::move(baseFilename), rotationHour, rotationMinute, trunct, maxFiles);
 }
 
 template<typename Mutex>
-auto create_daily_file_sink_ptr(toml::table &&sinktb, bool const &trunct, toml::string &&base_filename,
-                                std::size_t const &max_files) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>
+auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
+                            std::size_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>
 {
-    auto tup = create_daily_file_sink_tuple(std::move(sinktb), trunct, std::move(base_filename), max_files);
+    auto tup = createDailyFileSinkTuple(std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
     return std::make_shared<spdlog::sinks::daily_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
                                                                    std::get<3>(tup), std::get<4>(tup));
 }
 
-auto create_null_sink_ptr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::details::null_mutex>>
+auto createNullSinkPtr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::details::null_mutex>>
 {
     return std::make_shared<spdlog::sinks::null_sink<spdlog::details::null_mutex>>();
 }
 
 template<typename Mutex>
-auto create_stdout_sink_ptr() -> std::shared_ptr<spdlog::sinks::stdout_sink<Mutex>>
+auto createStdoutSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_sink<Mutex>>
 {
     return std::make_shared<spdlog::sinks::stdout_sink<Mutex>>();
 }
 
 //////// needs work
 // template<typename Mutex>
-// auto create_stdout_color_sink_ptr() -> std::shared_ptr<spdlog::sinks::stdout_color_sink_st<Mutex>>
+// auto createStdoutColorSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_color_sink_st<Mutex>>
 // {
 //     return std::make_shared<spdlog::sinks::stdout_color_sink<Mutex>>();
 // }
 
 #ifdef __linux__
-auto create_syslog_sink_tuple(toml::table const &sinktb)
+auto createSyslogSinkTuple(toml::table const &sinkTable)
         -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const>
 {
-    auto ident = (sinktb.contains("ident")) ? sinktb.at("ident").as_string() : "";
+    auto ident = (sinkTable.contains("ident")) ? sinkTable.at("ident").as_string() : "";
 
-    auto syslog_option = (sinktb.contains("syslog_option")) ? sinktb.at("syslog_option").as_integer() : 0;
+    auto syslogOption = (sinkTable.contains("syslog_option")) ? sinkTable.at("syslog_option").as_integer() : 0;
 
-    auto syslog_facility =
-            (sinktb.contains("syslog_facility")) ? sinktb.at("syslog_facility").as_integer() : LOG_USER; // macro
+    auto syslogFacility =
+            (sinkTable.contains("syslog_facility")) ? sinkTable.at("syslog_facility").as_integer() : LOG_USER; // macro
 
-    bool enable_formatting = true;
+    bool enableFormatting = true;
 
-    return std::make_tuple(std::move(ident), syslog_option, syslog_facility, enable_formatting);
+    return std::make_tuple(std::move(ident), syslogOption, syslogFacility, enableFormatting);
 }
 
 template<typename Mutex>
-auto create_syslog_sink_ptr(toml::table const &sinktb) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>
+auto createSyslogSinkPtr(toml::table const &sinkTable) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>
 {
-    auto tup = create_syslog_sink_tuple(sinktb);
+    auto tup = createSyslogSinkTuple(sinkTable);
     return std::make_shared<spdlog::sinks::syslog_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
                                                                std::get<3>(tup));
 }
 
 #elif _WIN32
 template<typename Mutex>
-auto create_msvc_sink_ptr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>
+auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>
 {
     return std::make_shared<spdlog::sinks::msvc_sink<Mutex>>();
 }
 #endif
 
-auto gen_from_file_str(toml::string &&typestr, toml::table &&sinktb, bool const &trunct) -> spdlog::sink_ptr
+auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct) -> spdlog::sink_ptr
 {
-    if (typestr == "basic_file_sink_st") {
-        return create_file_sink_st_ptr(sinktb, trunct);
+    if (typeStr == "basic_file_sink_st") {
+        return createFileSinkStPtr(sinkTable, trunct);
     }
-    if (typestr == "basic_file_sink_mt") {
-        return create_file_sink_mt_ptr(sinktb, trunct);
+    if (typeStr == "basic_file_sink_mt") {
+        return createFileSinkMtPtr(sinkTable, trunct);
     }
 
     return nullptr;
 }
 
-auto gen_from_rotate_str(toml::string &&typestr, toml::table &&sinktb, toml::string &&base_filename,
-                         std::size_t const &max_files) -> spdlog::sink_ptr
+auto genFromRotateStr(toml::string &&typeStr, toml::table &&sinkTable, toml::string &&baseFilename,
+                      std::size_t const &maxFiles) -> spdlog::sink_ptr
 {
-    if (typestr == "rotating_file_sink_st") {
-        return create_rotating_file_sink_st_ptr(std::move(sinktb), std::move(base_filename), max_files);
+    if (typeStr == "rotating_file_sink_st") {
+        return createRotatingFileSinkStPtr(std::move(sinkTable), std::move(baseFilename), maxFiles);
     }
-    if (typestr == "rotating_file_sink_mt") {
-        return create_rotating_file_sink_mt_ptr(std::move(sinktb), std::move(base_filename), max_files);
+    if (typeStr == "rotating_file_sink_mt") {
+        return createRotatingFileSinkMtPtr(std::move(sinkTable), std::move(baseFilename), maxFiles);
     }
 
     return nullptr;
 }
 
-auto gen_from_daily_str(toml::string &&typestr, toml::table &&sinktb, bool const &trunct,
-                        toml::string &&base_filename, std::size_t const &max_files) -> spdlog::sink_ptr
+auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct,
+                     toml::string &&baseFilename, std::size_t const &maxFiles) -> spdlog::sink_ptr
 {
-    if (typestr == "daily_file_sink_st") {
-        return create_daily_file_sink_st_ptr(std::move(sinktb), trunct, std::move(base_filename), max_files);
+    if (typeStr == "daily_file_sink_st") {
+        return createDailyFileSinkStPtr(std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
     }
-    if (typestr == "daily_file_sink_mt") {
-        return create_daily_file_sink_mt_ptr(std::move(sinktb), trunct, std::move(base_filename), max_files);
+    if (typeStr == "daily_file_sink_mt") {
+        return createDailyFileSinkMtPtr(std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
     }
 
     return nullptr;
 }
 
-auto gen_from_null_or_std_str(toml::string &&typestr) -> spdlog::sink_ptr
+auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr
 {
-    if (typestr == "null_sink_st" || typestr == "null_sink_mt") {
-        return create_null_sink_ptr();
+    if (typeStr == "null_sink_st" || typeStr == "null_sink_mt") {
+        return createNullSinkPtr();
     }
-    if (typestr == "stdout_sink_st") {
-        return create_stdout_sink_st_ptr();
+    if (typeStr == "stdout_sink_st") {
+        return createStdoutSinkStPtr();
     }
-    if (typestr == "stdout_sink_mt") {
-        return create_stdout_sink_mt_ptr();
+    if (typeStr == "stdout_sink_mt") {
+        return createStdoutSinkMtPtr();
     }
-    if (typestr == "stdout_color_sink_st" || typestr == "color_stdout_sink_st") {
+    if (typeStr == "stdout_color_sink_st" || typeStr == "color_stdout_sink_st") {
         return std::make_shared<spdlog::sinks::stdout_color_sink_st>(); // still needs work
     }
-    if (typestr == "stdout_color_sink_mt" || typestr == "color_stdout_sink_mt") {
+    if (typeStr == "stdout_color_sink_mt" || typeStr == "color_stdout_sink_mt") {
         return std::make_shared<spdlog::sinks::stdout_color_sink_mt>(); // still needs work
     }
 
@@ -225,25 +225,25 @@ auto gen_from_null_or_std_str(toml::string &&typestr) -> spdlog::sink_ptr
 }
 
 #ifdef __linux__
-auto gen_from_linux_str(toml::string &&typestr, toml::table &&sinktb) -> spdlog::sink_ptr
+auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog::sink_ptr
 {
-    if (typestr == "syslog_sink_st") {
-        return create_syslog_sink_st_ptr(sinktb);
+    if (typeStr == "syslog_sink_st") {
+        return createSyslogSinkStPtr(sinkTable);
     }
-    if (typestr == "syslog_sink_mt") {
-        return create_syslog_sink_mt_ptr(sinktb);
+    if (typeStr == "syslog_sink_mt") {
+        return createSyslogSinkMtPtr(sinkTable);
     }
 
     return nullptr;
 }
 #elif _WIN32
-static auto gen_from_win_str(toml::string &&typestr) -> spdlog::sink_ptr
+static auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr
 {
-    if (typestr == "msvc_sink_st") {
-        return create_msvc_sink_st_ptr();
+    if (typeStr == "msvc_sink_st") {
+        return createMsvcSinkStPtr();
     }
-    if (typestr == "msvc_sink_mt") {
-        return create_msvc_sink_mt_ptr();
+    if (typeStr == "msvc_sink_mt") {
+        return createMsvcSinkMtPtr();
     }
 
     return nullptr;

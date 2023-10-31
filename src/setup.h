@@ -4,26 +4,26 @@
 
 namespace KDSPDSetup::setup {
 
-void handle_multifiles(toml::string &&typestr, toml::table &&sinktb, spdlog::sink_ptr &sinkp, bool const &trunct);
+void handleMultifiles(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &trunct);
 
-void handle_truncatable(toml::string &&typestr, toml::table &&sinktb, spdlog::sink_ptr &sinkp);
+void handleTruncatable(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr);
 
-void setup_sink(toml::table &&sinktb);
+void setupSink(toml::table &&sinkTable);
 
-void setup_sinks(toml::value const &data);
+void setupSinks(toml::value const &data);
 
-void setup_patterns(toml::value const &data);
+void setupPatterns(toml::value const &data);
 
-void setup_threadpools(toml::value const &data);
+void setupThreadPools(toml::value const &data);
 
-void register_async(toml::table const &logtb, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinklist,
+void register_async(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
                     toml::string const &pattern);
 
-void register_syncr(toml::table const &logtb, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinklist,
+void registerSyncr(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
                     toml::string const &pattern);
 
-void setup_logger(toml::table const &logtb);
+void setupLogger(toml::table const &loggerTable);
 
-void setup_loggers(toml::value const &data);
+void setupLoggers(toml::value const &data);
 
 } // namespace KDSPDSetup::setup
