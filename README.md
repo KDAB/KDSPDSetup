@@ -60,7 +60,7 @@ Aside from the obvious dependencies [spdlog](https://github.com/gabime/spdlog) a
 | TOML parsing | [toml11](https://github.com/ToruNiina/toml11) | Always     |
 | Testing      | [doctest](https://github.com/doctest/doctest) | Tests only |
 
-These dependencies will be downloaded as submodules if not found. (WIP)
+These dependencies will be automatically downloaded if not found.
 
 ## Build & Install
 
@@ -68,7 +68,7 @@ These dependencies will be downloaded as submodules if not found. (WIP)
 
 You'll need at least CMake 3.5 to build this library.
 
-To build as a static library, pass the flag `-DBUILD_STATIC` to CMake. Otherwise, it will build as a shared library by default.
+... ... ...
 
 ### Install
 

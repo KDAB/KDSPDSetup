@@ -1,6 +1,0 @@
-[submodule "lib/toml11"]
-	path = lib/toml11
-	url = https://github.com/ToruNiina/toml11
-[submodule "lib/doctest"]
-	path = lib/doctest
-	url = https://github.com/doctest/doctest
