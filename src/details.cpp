@@ -98,7 +98,7 @@ auto createFileSinkPtr(toml::table const &sinkTable, bool const &trunct)
 
 auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
                               std::size_t const &maxFiles)
-        -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const, int const>
+        -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const, std::size_t const>
 {
     auto rotationHour = sinkTable.at("rotation_hour").as_integer();
     auto rotationMinute = sinkTable.at("rotation_minute").as_integer();

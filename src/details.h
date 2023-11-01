@@ -84,12 +84,12 @@ template<typename Mutex>
 auto createFileSinkPtr(toml::table const &sinkTable, bool const &trunct)
         -> std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>>;
 
-auto createDailyFileSinkTuple(toml::table const &sinkTable, bool const &trunct, toml::string &&baseFilename,
+auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
                               std::size_t const &maxFiles)
-        -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const, int const>;
+        -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const, std::size_t const>;
 
 template<typename Mutex>
-auto createDailyFileSinkPtr(toml::table const &sinkTable, bool const &trunct, toml::string &&baseFilename,
+auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
                             std::size_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>;
 
 auto createNullSinkPtr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::details::null_mutex>>;
