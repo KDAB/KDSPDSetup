@@ -103,7 +103,7 @@ TEST_SUITE("Tests for internals")
                                       { "max_files", 10 },
                                       { "level", "info" } };
 
-            auto const maxFiles = cTable.at("max_files").as_integer();
+            auto const maxFiles = static_cast<uint16_t>(cTable.at("max_files").as_integer());
             auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
@@ -216,7 +216,7 @@ TEST_SUITE("Tests for internals")
                                 { "max_files", 10 },
                                 { "level", "err" } };
 
-            auto const maxFiles = cTable.at("max_files").as_integer();
+            auto const maxFiles = static_cast<std::size_t>(cTable.at("max_files").as_integer());
             auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
@@ -509,7 +509,7 @@ TEST_SUITE("Tests for internals")
                                 { "rotation_minute", 30 },
                                 { "level", "info" } };
 
-            auto const maxFiles = (cTable.contains("max_files")) ? cTable.at("max_files").as_integer() : 0;
+            auto const maxFiles = (cTable.contains("max_files")) ? static_cast<uint16_t>(cTable.at("max_files").as_integer()) : uint16_t{ 0 };
             auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
@@ -520,10 +520,10 @@ TEST_SUITE("Tests for internals")
                 auto tup = KDSPDSetup::details::createDailyFileSinkTuple(std::move(table), trunct, std::move(baseFileName), maxFiles);
 
                 CHECK(std::get<0>(tup) == "log/daily_spdlog_setup.log");
-                CHECK(std::get<1>(tup) == std::size_t{ 17 });
-                CHECK(std::get<2>(tup) == std::size_t{ 30 });
-                CHECK(std::get<3>(tup) == std::size_t{ false });
-                CHECK(std::get<4>(tup) == std::size_t{ 0 });
+                CHECK(std::get<1>(tup) == int{ 17 });
+                CHECK(std::get<2>(tup) == int{ 30 });
+                CHECK(std::get<3>(tup) == false);
+                CHECK(std::get<4>(tup) == uint16_t{ 0 });
             }
 
             SUBCASE("sink_ptr")
@@ -623,7 +623,7 @@ TEST_SUITE("Tests for internals")
                                 { "rotation_minute", 30 },
                                 { "level", "err" } };
 
-            auto const maxFiles = (cTable.contains("max_files")) ? cTable.at("max_files").as_integer() : 0;
+            auto const maxFiles = (cTable.contains("max_files")) ? static_cast<uint16_t>(cTable.at("max_files").as_integer()) : uint16_t{ 0 };
             auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
@@ -634,10 +634,10 @@ TEST_SUITE("Tests for internals")
                 auto tup = KDSPDSetup::details::createDailyFileSinkTuple(std::move(table), trunct, std::move(baseFileName), maxFiles);
 
                 CHECK(std::get<0>(tup) == "log/daily_spdlog_setup_err.log");
-                CHECK(std::get<1>(tup) == std::size_t{ 17 });
-                CHECK(std::get<2>(tup) == std::size_t{ 30 });
-                CHECK(std::get<3>(tup) == std::size_t{ false });
-                CHECK(std::get<4>(tup) == std::size_t{ 0 });
+                CHECK(std::get<1>(tup) == int{ 17 });
+                CHECK(std::get<2>(tup) == int{ 30 });
+                CHECK(std::get<3>(tup) == false);
+                CHECK(std::get<4>(tup) == uint16_t{ 0 });
             }
 
             SUBCASE("sink_ptr")

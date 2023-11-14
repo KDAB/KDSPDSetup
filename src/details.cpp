@@ -97,18 +97,18 @@ auto createFileSinkPtr(toml::table const &sinkTable, bool const &trunct)
 }
 
 auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
-                              std::size_t const &maxFiles)
-        -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const, std::size_t const>
+                              uint16_t const &maxFiles)
+        -> std::tuple<toml::string const, int const, int const, bool const, uint16_t const>
 {
-    auto rotationHour = sinkTable.at("rotation_hour").as_integer();
-    auto rotationMinute = sinkTable.at("rotation_minute").as_integer();
+    auto rotationHour = static_cast<int>(sinkTable.at("rotation_hour").as_integer());
+    auto rotationMinute = static_cast<int>(sinkTable.at("rotation_minute").as_integer());
 
     return std::make_tuple(std::move(baseFilename), rotationHour, rotationMinute, trunct, maxFiles);
 }
 
 template<typename Mutex>
 auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
-                            std::size_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>
+                            uint16_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>
 {
     auto tup = createDailyFileSinkTuple(std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
     return std::make_shared<spdlog::sinks::daily_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
@@ -135,14 +135,14 @@ auto createStdoutSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_sink<Mutex>>
 
 #ifdef __linux__
 auto createSyslogSinkTuple(toml::table const &sinkTable)
-        -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const>
+        -> std::tuple<toml::string const, int const, int const, bool const>
 {
     auto ident = (sinkTable.contains("ident")) ? sinkTable.at("ident").as_string() : "";
 
-    auto syslogOption = (sinkTable.contains("syslog_option")) ? sinkTable.at("syslog_option").as_integer() : 0;
+    auto syslogOption = (sinkTable.contains("syslog_option")) ? static_cast<int>(sinkTable.at("syslog_option").as_integer()) : int{ 0 };
 
     auto syslogFacility =
-            (sinkTable.contains("syslog_facility")) ? sinkTable.at("syslog_facility").as_integer() : LOG_USER; // macro
+            (sinkTable.contains("syslog_facility")) ? static_cast<int>(sinkTable.at("syslog_facility").as_integer()) : LOG_USER; // macro
 
     bool enableFormatting = true;
 
@@ -191,7 +191,7 @@ auto genFromRotateStr(toml::string &&typeStr, toml::table &&sinkTable, toml::str
 }
 
 auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct,
-                     toml::string &&baseFilename, std::size_t const &maxFiles) -> spdlog::sink_ptr
+                     toml::string &&baseFilename, uint16_t const &maxFiles) -> spdlog::sink_ptr
 {
     if (typeStr == "daily_file_sink_st") {
         return createDailyFileSinkStPtr(std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
@@ -237,7 +237,7 @@ auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog:
     return nullptr;
 }
 #elif _WIN32
-static auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr
+auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr
 {
     if (typeStr == "msvc_sink_st") {
         return createMsvcSinkStPtr();

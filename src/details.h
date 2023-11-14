@@ -62,7 +62,7 @@ private:
 #define createSyslogSinkStPtr createSyslogSinkPtr<spdlog::details::null_mutex>
 #define createSyslogSinkMtPtr createSyslogSinkPtr<std::mutex>
 #elif _WIN32
-#define createMsvcSinkStPtr createMsvcSinkPtr<spdlog::null_mutex>
+#define createMsvcSinkStPtr createMsvcSinkPtr<spdlog::details::null_mutex>
 #define createMsvcSinkMtPtr createMsvcSinkPtr<std::mutex>
 #endif
 
@@ -85,12 +85,12 @@ auto createFileSinkPtr(toml::table const &sinkTable, bool const &trunct)
         -> std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>>;
 
 auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
-                              std::size_t const &maxFiles)
-        -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const, std::size_t const>;
+                              uint16_t const &maxFiles)
+        -> std::tuple<toml::string const, int const, int const, bool const, uint16_t const>;
 
 template<typename Mutex>
 auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
-                            std::size_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>;
+                            uint16_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>;
 
 auto createNullSinkPtr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::details::null_mutex>>;
 
@@ -103,7 +103,7 @@ auto createStdoutSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_sink<Mutex>>
 
 #ifdef __linux__
 auto createSyslogSinkTuple(toml::table const &sinkTable)
-        -> std::tuple<toml::string const, std::size_t const, std::size_t const, bool const>;
+        -> std::tuple<toml::string const, int const, int const, bool const>;
 
 template<typename Mutex>
 auto createSyslogSinkPtr(toml::table const &sinkTable) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>;
@@ -120,7 +120,7 @@ auto genFromRotateStr(toml::string &&typeStr, toml::table &&sinkTable, toml::str
                       std::size_t const &maxFiles) -> spdlog::sink_ptr;
 
 auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct,
-                     toml::string &&baseFilename, std::size_t const &maxFiles) -> spdlog::sink_ptr;
+                     toml::string &&baseFilename, uint16_t const &maxFiles) -> spdlog::sink_ptr;
 
 auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr;
 
@@ -128,7 +128,7 @@ auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr;
 auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog::sink_ptr;
 
 #elif _WIN32
-static auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr;
+auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr;
 
 #endif
 

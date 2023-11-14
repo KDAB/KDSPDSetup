@@ -5,7 +5,7 @@ namespace KDSPDSetup::setup {
 void handleMultifiles(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &trunct)
 {
     auto baseFilename = sinkTable.at("base_filename").as_string();
-    auto maxFiles = (sinkTable.contains("max_files")) ? sinkTable.at("max_files").as_integer() : 0;
+    auto maxFiles = (sinkTable.contains("max_files")) ? static_cast<uint16_t>(sinkTable.at("max_files").as_integer()) : uint16_t{0};
 
     if (details::inTypelist(typeStr, details::rotateStrs)) {
         sinkPtr = details::genFromRotateStr(std::move(typeStr), std::move(sinkTable), std::move(baseFilename), maxFiles);
@@ -56,7 +56,7 @@ void setupSink(toml::table &&sinkTable)
 #endif
     } else if (details::inTypelist(typeStr, details::winStrs)) {
 #ifdef _WIN32
-        sinkPtr = details::createMsvcSinkPtr();
+        sinkPtr = details::genFromWinStr(std::move(typeStr));
 #else
         return;
 #endif
@@ -112,8 +112,8 @@ void setupThreadPools(toml::value const &data)
 
         for (auto &&poolTable : threadPools) {
             auto const name = poolTable.at("name").as_string();
-            auto const queueSize = poolTable.at("queue_size").as_integer();
-            auto const numThreads = poolTable.at("num_threads").as_integer();
+            auto const queueSize = static_cast<std::size_t>(poolTable.at("queue_size").as_integer());
+            auto const numThreads = static_cast<std::size_t>(poolTable.at("num_threads").as_integer());
 
             details::SPDMaps::emplaceThreadPoolMap(std::make_pair(name, std::make_pair(queueSize, numThreads)));
         }
