@@ -150,9 +150,9 @@ auto createSyslogSinkTuple(toml::table const &sinkTable)
 }
 
 template<typename Mutex>
-auto createSyslogSinkPtr(toml::table const &sinkTable) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>
+auto createSyslogSinkPtr(toml::table &&sinkTable) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>
 {
-    auto tup = createSyslogSinkTuple(sinkTable);
+    auto tup = createSyslogSinkTuple(std::move(sinkTable));
     return std::make_shared<spdlog::sinks::syslog_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
                                                                std::get<3>(tup));
 }
@@ -228,10 +228,10 @@ auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr
 auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog::sink_ptr
 {
     if (typeStr == "syslog_sink_st") {
-        return createSyslogSinkStPtr(sinkTable);
+        return createSyslogSinkStPtr(std::move(sinkTable));
     }
     if (typeStr == "syslog_sink_mt") {
-        return createSyslogSinkMtPtr(sinkTable);
+        return createSyslogSinkMtPtr(std::move(sinkTable));
     }
 
     return nullptr;

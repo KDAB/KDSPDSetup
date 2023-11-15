@@ -106,12 +106,10 @@ auto createSyslogSinkTuple(toml::table const &sinkTable)
         -> std::tuple<toml::string const, int const, int const, bool const>;
 
 template<typename Mutex>
-auto createSyslogSinkPtr(toml::table const &sinkTable) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>;
-
+auto createSyslogSinkPtr(toml::table &&sinkTable) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>;
 #elif _WIN32
 template<typename Mutex>
 auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>;
-
 #endif
 
 auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct) -> spdlog::sink_ptr;

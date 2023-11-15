@@ -321,7 +321,7 @@ TEST_SUITE("Tests for internals")
         }
     }
 
-    TEST_CASE("file_sink")
+    TEST_CASE("basic_file_sink")
     {
         SUBCASE("create_file_sink_st_ptr")
         {
@@ -729,14 +729,216 @@ TEST_SUITE("Tests for internals")
         }
     }
 
-    TEST_CASE("null_or_std_sink_ptr") // maybe should be separated
+    TEST_CASE("null_sink_ptr")
     {
-        SUBCASE("") { }
+        SUBCASE("null_sink_st")
+        {
+            toml::table cTable{ { "name", "null_sink_st" },
+                                { "type", "null_sink_st" } };
+
+            SUBCASE("sink_ptr")
+            {
+                auto table = cTable;
+
+                auto sinkPtr = KDSPDSetup::details::createNullSinkPtr();
+
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::null_sink_st>));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("genFrom")
+            {
+                auto table = cTable;
+                auto typeStr = table.at("type").as_string();
+
+                auto sinkPtr = KDSPDSetup::details::genFromNullOrStdStr(std::move(typeStr));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("setupSink")
+            {
+                auto table = cTable;
+
+                CHECK(!KDSPDSetup::details::SPDMaps::sinkMap().contains("null_sink_st"));
+
+                KDSPDSetup::setup::setupSink(std::move(table));
+
+                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("null_sink_st"));
+
+                auto sinkPtr = KDSPDSetup::details::SPDMaps::sinkMap().at("null_sink_st");
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+        }
+
+        SUBCASE("null_sink_mt")
+        {
+            toml::table cTable{ { "name", "null_sink_mt" },
+                                { "type", "null_sink_mt" } };
+
+            SUBCASE("sink_ptr")
+            {
+                auto table = cTable;
+
+                auto sinkPtr = KDSPDSetup::details::createNullSinkPtr();
+
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::null_sink_mt>));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("genFrom")
+            {
+                auto table = cTable;
+                auto typeStr = table.at("type").as_string();
+
+                auto sinkPtr = KDSPDSetup::details::genFromNullOrStdStr(std::move(typeStr));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("setupSink")
+            {
+                auto table = cTable;
+
+                CHECK(!KDSPDSetup::details::SPDMaps::sinkMap().contains("null_sink_mt"));
+
+                KDSPDSetup::setup::setupSink(std::move(table));
+
+                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("null_sink_mt"));
+
+                auto sinkPtr = KDSPDSetup::details::SPDMaps::sinkMap().at("null_sink_mt");
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+        }
+    }
+
+    TEST_CASE("std_sink_ptr")
+    {
+        SUBCASE("")
+        {
+        }
     }
 #ifdef __linux__
-    TEST_CASE("createSyslogSinkPtr")
+    TEST_CASE("syslog_sink_ptr")
     {
-        SUBCASE("") { }
+
+        SUBCASE("syslog_sink_st")
+        {
+            toml::table cTable{ { "name", "syslog_st" },
+                                { "type", "syslog_sink_st" },
+                                { "ident", "example_ident" },
+                                { "syslog_option", 1 },
+                                { "syslog_facility", 0 } };
+
+            SUBCASE("tuple")
+            {
+                auto table = cTable;
+
+                auto tup = KDSPDSetup::details::createSyslogSinkTuple(std::move(table));
+
+                CHECK(std::get<0>(tup) == "example_ident");
+                CHECK(std::get<1>(tup) == std::size_t{ LOG_PID });
+                CHECK(std::get<2>(tup) == std::size_t{ LOG_KERN });
+                CHECK(std::get<3>(tup) == true);
+            }
+
+            SUBCASE("sink_ptr")
+            {
+                auto table = cTable;
+
+                auto sinkPtr = KDSPDSetup::details::createSyslogSinkStPtr(std::move(table));
+
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::syslog_sink_st>));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("genFrom")
+            {
+                auto table = cTable;
+                auto typeStr = table.at("type").as_string();
+
+                auto sinkPtr = KDSPDSetup::details::genFromLinuxStr(std::move(typeStr), std::move(table));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("setupSink")
+            {
+                auto table = cTable;
+
+                CHECK(!KDSPDSetup::details::SPDMaps::sinkMap().contains("syslog_st"));
+
+                KDSPDSetup::setup::setupSink(std::move(table));
+
+                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("syslog_st"));
+
+                auto sinkPtr = KDSPDSetup::details::SPDMaps::sinkMap().at("syslog_st");
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+        }
+
+        SUBCASE("syslog_sink_mt")
+        {
+            toml::table cTable{ { "name", "syslog_mt" },
+                                { "type", "syslog_sink_mt" },
+                                { "ident", "another_ident" },
+                                { "syslog_option", 0x08 },
+                                { "syslog_facility", 16 } };
+
+            SUBCASE("tuple")
+            {
+                auto table = cTable;
+
+                auto tup = KDSPDSetup::details::createSyslogSinkTuple(std::move(table));
+
+                CHECK(std::get<0>(tup) == "another_ident");
+                CHECK(std::get<1>(tup) == std::size_t{ LOG_NDELAY });
+                CHECK(std::get<2>(tup) == std::size_t{ LOG_MAIL });
+                CHECK(std::get<3>(tup) == true);
+            }
+
+            SUBCASE("sink_ptr")
+            {
+                auto table = cTable;
+
+                auto sinkPtr = KDSPDSetup::details::createSyslogSinkMtPtr(std::move(table));
+
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::syslog_sink_mt>));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("genFrom")
+            {
+                auto table = cTable;
+                auto typeStr = table.at("type").as_string();
+
+                auto sinkPtr = KDSPDSetup::details::genFromLinuxStr(std::move(typeStr), std::move(table));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("setupSink")
+            {
+                auto table = cTable;
+
+                CHECK(!KDSPDSetup::details::SPDMaps::sinkMap().contains("syslog_mt"));
+
+                KDSPDSetup::setup::setupSink(std::move(table));
+
+                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("syslog_mt"));
+
+                auto sinkPtr = KDSPDSetup::details::SPDMaps::sinkMap().at("syslog_mt");
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+        }
     }
 #elif _WIN32
     TEST_CASE("create_msvc_sink_ptr")
