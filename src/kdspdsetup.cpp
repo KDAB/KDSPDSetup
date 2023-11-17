@@ -1,4 +1,4 @@
-#include "../include/kdspdsetup.h"
+#include <../include/kdspdsetup.h>
 #include "setup.h"
 
 namespace KDSPDSetup {
