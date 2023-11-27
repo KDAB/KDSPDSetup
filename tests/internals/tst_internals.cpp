@@ -159,7 +159,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleMultifiles(std::move(typeStr), std::move(table), sinkPtr, trunct);
+                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, trunct);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -272,7 +272,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleMultifiles(std::move(typeStr), std::move(table), sinkPtr, trunct);
+                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, trunct);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -566,7 +566,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleMultifiles(std::move(typeStr), std::move(table), sinkPtr, trunct);
+                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, trunct);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -680,7 +680,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleMultifiles(std::move(typeStr), std::move(table), sinkPtr, trunct);
+                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, trunct);
 
                 CHECK(sinkPtr != nullptr);
 

@@ -2,10 +2,10 @@
 
 namespace KDSPDSetup::setup {
 
-void handleMultifiles(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &trunct)
+void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &trunct)
 {
     auto baseFilename = sinkTable.at("base_filename").as_string();
-    auto maxFiles = (sinkTable.contains("max_files")) ? static_cast<uint16_t>(sinkTable.at("max_files").as_integer()) : uint16_t{0};
+    auto maxFiles = (sinkTable.contains("max_files")) ? static_cast<uint16_t>(sinkTable.at("max_files").as_integer()) : uint16_t{ 0 };
 
     if (details::inTypelist(typeStr, details::rotateStrs)) {
         sinkPtr = details::genFromRotateStr(std::move(typeStr), std::move(sinkTable), std::move(baseFilename), maxFiles);
@@ -23,7 +23,7 @@ void handleTruncatable(toml::string &&typeStr, toml::table &&sinkTable, spdlog::
     if (details::inTypelist(typeStr, details::fileStrs)) {
         sinkPtr = details::genFromFileStr(std::move(typeStr), std::move(sinkTable), trunct);
     } else if (details::inTypelist(typeStr, details::rotateStrs) || details::inTypelist(typeStr, details::dailyStrs)) {
-        handleMultifiles(std::move(typeStr), std::move(sinkTable), sinkPtr, trunct);
+        handleMultipleFileSink(std::move(typeStr), std::move(sinkTable), sinkPtr, trunct);
     }
 }
 

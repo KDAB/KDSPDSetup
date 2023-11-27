@@ -4,7 +4,7 @@
 
 namespace KDSPDSetup::setup {
 
-void handleMultifiles(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &trunct);
+void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &trunct);
 
 void handleTruncatable(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr);
 
@@ -20,7 +20,7 @@ void register_async(toml::table const &loggerTable, toml::string const &name, st
                     toml::string const &pattern);
 
 void registerSyncr(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
-                    toml::string const &pattern);
+                   toml::string const &pattern);
 
 void setupLogger(toml::table const &loggerTable);
 
