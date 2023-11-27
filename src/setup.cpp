@@ -120,8 +120,8 @@ void setupThreadPools(toml::value const &data)
     }
 }
 
-void register_async(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
-                    toml::string const &pattern)
+void registerAsynchronousLogger(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
+                                toml::string const &pattern)
 {
     auto const threadPool = (loggerTable.contains("thread_pool")) ? loggerTable.at("thread_pool").as_string() : "";
 
@@ -149,8 +149,8 @@ void register_async(toml::table const &loggerTable, toml::string const &name, st
     spdlog::register_logger(logger);
 }
 
-void registerSyncr(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
-                   toml::string const &pattern)
+void registerSynchronousLogger(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
+                               toml::string const &pattern)
 {
     auto logger = std::make_shared<spdlog::logger>(name, sinkList.cbegin(), sinkList.cend());
     if (pattern != "") {
@@ -187,9 +187,9 @@ void setupLogger(toml::table const &loggerTable)
     auto const type = (loggerTable.contains("type")) ? loggerTable.at("type").as_string() : "";
 
     if (type == "async") {
-        register_async(loggerTable, name, sinkList, pattern);
+        registerAsynchronousLogger(loggerTable, name, sinkList, pattern);
     } else {
-        registerSyncr(loggerTable, name, sinkList, pattern);
+        registerSynchronousLogger(loggerTable, name, sinkList, pattern);
     }
 }
 

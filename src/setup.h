@@ -16,11 +16,11 @@ void setupPatterns(toml::value const &data);
 
 void setupThreadPools(toml::value const &data);
 
-void register_async(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
-                    toml::string const &pattern);
+void registerAsynchronousLogger(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
+                                toml::string const &pattern);
 
-void registerSyncr(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
-                   toml::string const &pattern);
+void registerSynchronousLogger(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
+                               toml::string const &pattern);
 
 void setupLogger(toml::table const &loggerTable);
 
