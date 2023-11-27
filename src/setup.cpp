@@ -16,7 +16,7 @@ void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spd
     }
 }
 
-void handleTruncatable(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr)
+void handleTruncatableSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr)
 {
     auto const truncate = (sinkTable.contains("truncate")) ? sinkTable.at("truncate").as_boolean() : false;
 
@@ -41,7 +41,7 @@ void setupSink(toml::table &&sinkTable)
 
     if (details::inTypelist(typeStr, details::fileStrs) || details::inTypelist(typeStr, details::rotateStrs) ||
         details::inTypelist(typeStr, details::dailyStrs)) {
-        handleTruncatable(std::move(typeStr), std::move(sinkTable), sinkPtr);
+        handleTruncatableSink(std::move(typeStr), std::move(sinkTable), sinkPtr);
     }
 
     else if (details::inTypelist(typeStr, details::nullStrs) || details::inTypelist(typeStr, details::stdStrs)) {

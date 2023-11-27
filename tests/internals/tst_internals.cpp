@@ -178,7 +178,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleTruncatable(std::move(typeStr), std::move(table), sinkPtr);
+                KDSPDSetup::setup::handleTruncatableSink(std::move(typeStr), std::move(table), sinkPtr);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -291,7 +291,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleTruncatable(std::move(typeStr), std::move(table), sinkPtr);
+                KDSPDSetup::setup::handleTruncatableSink(std::move(typeStr), std::move(table), sinkPtr);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -381,7 +381,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleTruncatable(std::move(typeStr), std::move(table), sinkPtr);
+                KDSPDSetup::setup::handleTruncatableSink(std::move(typeStr), std::move(table), sinkPtr);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -468,7 +468,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleTruncatable(std::move(typeStr), std::move(table), sinkPtr);
+                KDSPDSetup::setup::handleTruncatableSink(std::move(typeStr), std::move(table), sinkPtr);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -585,7 +585,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleTruncatable(std::move(typeStr), std::move(table), sinkPtr);
+                KDSPDSetup::setup::handleTruncatableSink(std::move(typeStr), std::move(table), sinkPtr);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -699,7 +699,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleTruncatable(std::move(typeStr), std::move(table), sinkPtr);
+                KDSPDSetup::setup::handleTruncatableSink(std::move(typeStr), std::move(table), sinkPtr);
 
                 CHECK(sinkPtr != nullptr);
 

@@ -6,7 +6,7 @@ namespace KDSPDSetup::setup {
 
 void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &truncate);
 
-void handleTruncatable(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr);
+void handleTruncatableSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr);
 
 void setupSink(toml::table &&sinkTable);
 
