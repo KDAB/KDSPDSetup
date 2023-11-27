@@ -82,35 +82,35 @@ auto createRotatingFileSinkPtr(toml::table const &sinkTable, toml::string &&base
                                                                       std::get<2>(tup));
 }
 
-auto createFileSinkTuple(toml::table const &sinkTable, bool const &trunct) -> std::tuple<toml::string const, bool const>
+auto createFileSinkTuple(toml::table const &sinkTable, bool const &truncate) -> std::tuple<toml::string const, bool const>
 {
     auto fileName = sinkTable.at("filename").as_string();
-    return std::make_tuple(std::move(fileName), trunct);
+    return std::make_tuple(std::move(fileName), truncate);
 }
 
 template<typename Mutex>
-auto createFileSinkPtr(toml::table const &sinkTable, bool const &trunct)
+auto createFileSinkPtr(toml::table const &sinkTable, bool const &truncate)
         -> std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>>
 {
-    auto tup = createFileSinkTuple(sinkTable, trunct);
+    auto tup = createFileSinkTuple(sinkTable, truncate);
     return std::make_shared<spdlog::sinks::basic_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup));
 }
 
-auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
+auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
                               uint16_t const &maxFiles)
         -> std::tuple<toml::string const, int const, int const, bool const, uint16_t const>
 {
     auto rotationHour = static_cast<int>(sinkTable.at("rotation_hour").as_integer());
     auto rotationMinute = static_cast<int>(sinkTable.at("rotation_minute").as_integer());
 
-    return std::make_tuple(std::move(baseFilename), rotationHour, rotationMinute, trunct, maxFiles);
+    return std::make_tuple(std::move(baseFilename), rotationHour, rotationMinute, truncate, maxFiles);
 }
 
 template<typename Mutex>
-auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
+auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
                             uint16_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>
 {
-    auto tup = createDailyFileSinkTuple(std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
+    auto tup = createDailyFileSinkTuple(std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
     return std::make_shared<spdlog::sinks::daily_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
                                                                    std::get<3>(tup), std::get<4>(tup));
 }
@@ -165,13 +165,13 @@ auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>
 }
 #endif
 
-auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct) -> spdlog::sink_ptr
+auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate) -> spdlog::sink_ptr
 {
     if (typeStr == "basic_file_sink_st") {
-        return createFileSinkStPtr(sinkTable, trunct);
+        return createFileSinkStPtr(sinkTable, truncate);
     }
     if (typeStr == "basic_file_sink_mt") {
-        return createFileSinkMtPtr(sinkTable, trunct);
+        return createFileSinkMtPtr(sinkTable, truncate);
     }
 
     return nullptr;
@@ -190,14 +190,14 @@ auto genFromRotateStr(toml::string &&typeStr, toml::table &&sinkTable, toml::str
     return nullptr;
 }
 
-auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct,
+auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate,
                      toml::string &&baseFilename, uint16_t const &maxFiles) -> spdlog::sink_ptr
 {
     if (typeStr == "daily_file_sink_st") {
-        return createDailyFileSinkStPtr(std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
+        return createDailyFileSinkStPtr(std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
     }
     if (typeStr == "daily_file_sink_mt") {
-        return createDailyFileSinkMtPtr(std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
+        return createDailyFileSinkMtPtr(std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
     }
 
     return nullptr;

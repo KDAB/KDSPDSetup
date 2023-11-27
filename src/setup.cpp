@@ -2,7 +2,7 @@
 
 namespace KDSPDSetup::setup {
 
-void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &trunct)
+void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &truncate)
 {
     auto baseFilename = sinkTable.at("base_filename").as_string();
     auto maxFiles = (sinkTable.contains("max_files")) ? static_cast<uint16_t>(sinkTable.at("max_files").as_integer()) : uint16_t{ 0 };
@@ -12,18 +12,18 @@ void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spd
     }
 
     else if (details::inTypelist(typeStr, details::dailyStrs)) {
-        sinkPtr = details::genFromDailyStr(std::move(typeStr), std::move(sinkTable), trunct, std::move(baseFilename), maxFiles);
+        sinkPtr = details::genFromDailyStr(std::move(typeStr), std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
     }
 }
 
 void handleTruncatable(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr)
 {
-    auto const trunct = (sinkTable.contains("truncate")) ? sinkTable.at("truncate").as_boolean() : false;
+    auto const truncate = (sinkTable.contains("truncate")) ? sinkTable.at("truncate").as_boolean() : false;
 
     if (details::inTypelist(typeStr, details::fileStrs)) {
-        sinkPtr = details::genFromFileStr(std::move(typeStr), std::move(sinkTable), trunct);
+        sinkPtr = details::genFromFileStr(std::move(typeStr), std::move(sinkTable), truncate);
     } else if (details::inTypelist(typeStr, details::rotateStrs) || details::inTypelist(typeStr, details::dailyStrs)) {
-        handleMultipleFileSink(std::move(typeStr), std::move(sinkTable), sinkPtr, trunct);
+        handleMultipleFileSink(std::move(typeStr), std::move(sinkTable), sinkPtr, truncate);
     }
 }
 

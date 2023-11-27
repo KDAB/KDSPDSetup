@@ -104,7 +104,7 @@ TEST_SUITE("Tests for internals")
                                       { "level", "info" } };
 
             auto const maxFiles = static_cast<uint16_t>(cTable.at("max_files").as_integer());
-            auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
+            auto const truncate = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
             {
@@ -159,7 +159,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, trunct);
+                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, truncate);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -217,7 +217,7 @@ TEST_SUITE("Tests for internals")
                                 { "level", "err" } };
 
             auto const maxFiles = static_cast<std::size_t>(cTable.at("max_files").as_integer());
-            auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
+            auto const truncate = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
             {
@@ -272,7 +272,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, trunct);
+                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, truncate);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -331,13 +331,13 @@ TEST_SUITE("Tests for internals")
                                 { "level", "info" },
                                 { "create_parent_dir", true } };
 
-            auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
+            auto const truncate = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
             {
                 auto table = cTable;
 
-                auto tup = KDSPDSetup::details::createFileSinkTuple(table, trunct);
+                auto tup = KDSPDSetup::details::createFileSinkTuple(table, truncate);
 
                 CHECK(std::get<0>(tup) == "log/spdlog_setup.log");
                 CHECK(std::get<1>(tup) == false);
@@ -348,7 +348,7 @@ TEST_SUITE("Tests for internals")
                 auto table = cTable;
                 auto baseFileName = table.at("filename").as_string();
 
-                auto sinkPtr = KDSPDSetup::details::createFileSinkStPtr(table, trunct);
+                auto sinkPtr = KDSPDSetup::details::createFileSinkStPtr(table, truncate);
 
                 CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::basic_file_sink_st>));
                 CHECK(sinkPtr->filename() == "log/spdlog_setup.log");
@@ -364,7 +364,7 @@ TEST_SUITE("Tests for internals")
                 auto table = cTable;
                 auto typeStr = table.at("type").as_string();
 
-                auto sinkPtr = KDSPDSetup::details::genFromFileStr(std::move(typeStr), std::move(table), trunct);
+                auto sinkPtr = KDSPDSetup::details::genFromFileStr(std::move(typeStr), std::move(table), truncate);
 
                 auto const level = cTable.at("level").as_string();
                 sinkPtr->set_level(KDSPDSetup::details::levelMap.at(level));
@@ -418,13 +418,13 @@ TEST_SUITE("Tests for internals")
                                 { "truncate", true },
                                 { "level", "err" } };
 
-            auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
+            auto const truncate = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
             {
                 auto table = cTable;
 
-                auto tup = KDSPDSetup::details::createFileSinkTuple(table, trunct);
+                auto tup = KDSPDSetup::details::createFileSinkTuple(table, truncate);
 
                 CHECK(std::get<0>(tup) == "log/spdlog_setup_err.log");
                 CHECK(std::get<1>(tup) == true);
@@ -435,7 +435,7 @@ TEST_SUITE("Tests for internals")
                 auto table = cTable;
                 auto baseFileName = table.at("filename").as_string();
 
-                auto sinkPtr = KDSPDSetup::details::createFileSinkMtPtr(table, trunct);
+                auto sinkPtr = KDSPDSetup::details::createFileSinkMtPtr(table, truncate);
 
                 CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::basic_file_sink_mt>));
                 CHECK(sinkPtr->filename() == "log/spdlog_setup_err.log");
@@ -451,7 +451,7 @@ TEST_SUITE("Tests for internals")
                 auto table = cTable;
                 auto typeStr = table.at("type").as_string();
 
-                auto sinkPtr = KDSPDSetup::details::genFromFileStr(std::move(typeStr), std::move(table), trunct);
+                auto sinkPtr = KDSPDSetup::details::genFromFileStr(std::move(typeStr), std::move(table), truncate);
 
                 auto const level = cTable.at("level").as_string();
                 sinkPtr->set_level(KDSPDSetup::details::levelMap.at(level));
@@ -510,14 +510,14 @@ TEST_SUITE("Tests for internals")
                                 { "level", "info" } };
 
             auto const maxFiles = (cTable.contains("max_files")) ? static_cast<uint16_t>(cTable.at("max_files").as_integer()) : uint16_t{ 0 };
-            auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
+            auto const truncate = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
             {
                 auto table = cTable;
                 auto baseFileName = table.at("base_filename").as_string();
 
-                auto tup = KDSPDSetup::details::createDailyFileSinkTuple(std::move(table), trunct, std::move(baseFileName), maxFiles);
+                auto tup = KDSPDSetup::details::createDailyFileSinkTuple(std::move(table), truncate, std::move(baseFileName), maxFiles);
 
                 CHECK(std::get<0>(tup) == "log/daily_spdlog_setup.log");
                 CHECK(std::get<1>(tup) == int{ 17 });
@@ -531,7 +531,7 @@ TEST_SUITE("Tests for internals")
                 auto table = cTable;
                 auto baseFileName = table.at("base_filename").as_string();
 
-                auto sinkPtr = KDSPDSetup::details::createDailyFileSinkStPtr(std::move(table), trunct, std::move(baseFileName), maxFiles);
+                auto sinkPtr = KDSPDSetup::details::createDailyFileSinkStPtr(std::move(table), truncate, std::move(baseFileName), maxFiles);
 
                 CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::daily_file_sink_st>));
                 // CHECK(sinkPtr->filename() == "log/daily_spdlog_setup.log");
@@ -549,7 +549,7 @@ TEST_SUITE("Tests for internals")
                 auto baseFileName = table.at("base_filename").as_string();
                 auto typeStr = table.at("type").as_string();
 
-                auto sinkPtr = KDSPDSetup::details::genFromDailyStr(std::move(typeStr), std::move(table), trunct, std::move(baseFileName), maxFiles);
+                auto sinkPtr = KDSPDSetup::details::genFromDailyStr(std::move(typeStr), std::move(table), truncate, std::move(baseFileName), maxFiles);
 
                 auto const level = cTable.at("level").as_string();
                 sinkPtr->set_level(KDSPDSetup::details::levelMap.at(level));
@@ -566,7 +566,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, trunct);
+                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, truncate);
 
                 CHECK(sinkPtr != nullptr);
 
@@ -624,14 +624,14 @@ TEST_SUITE("Tests for internals")
                                 { "level", "err" } };
 
             auto const maxFiles = (cTable.contains("max_files")) ? static_cast<uint16_t>(cTable.at("max_files").as_integer()) : uint16_t{ 0 };
-            auto const trunct = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
+            auto const truncate = (cTable.contains("truncate")) ? cTable.at("truncate").as_boolean() : false;
 
             SUBCASE("tuple")
             {
                 auto table = cTable;
                 auto baseFileName = table.at("base_filename").as_string();
 
-                auto tup = KDSPDSetup::details::createDailyFileSinkTuple(std::move(table), trunct, std::move(baseFileName), maxFiles);
+                auto tup = KDSPDSetup::details::createDailyFileSinkTuple(std::move(table), truncate, std::move(baseFileName), maxFiles);
 
                 CHECK(std::get<0>(tup) == "log/daily_spdlog_setup_err.log");
                 CHECK(std::get<1>(tup) == int{ 17 });
@@ -645,7 +645,7 @@ TEST_SUITE("Tests for internals")
                 auto table = cTable;
                 auto baseFileName = table.at("base_filename").as_string();
 
-                auto sinkPtr = KDSPDSetup::details::createDailyFileSinkMtPtr(std::move(table), trunct, std::move(baseFileName), maxFiles);
+                auto sinkPtr = KDSPDSetup::details::createDailyFileSinkMtPtr(std::move(table), truncate, std::move(baseFileName), maxFiles);
 
                 CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::daily_file_sink_mt>));
                 // CHECK(sinkPtr->filename() == "log/daily_spdlog_setup_err.log");
@@ -663,7 +663,7 @@ TEST_SUITE("Tests for internals")
                 auto baseFileName = table.at("base_filename").as_string();
                 auto typeStr = table.at("type").as_string();
 
-                auto sinkPtr = KDSPDSetup::details::genFromDailyStr(std::move(typeStr), std::move(table), trunct, std::move(baseFileName), maxFiles);
+                auto sinkPtr = KDSPDSetup::details::genFromDailyStr(std::move(typeStr), std::move(table), truncate, std::move(baseFileName), maxFiles);
 
                 auto const level = cTable.at("level").as_string();
                 sinkPtr->set_level(KDSPDSetup::details::levelMap.at(level));
@@ -680,7 +680,7 @@ TEST_SUITE("Tests for internals")
 
                 CHECK(sinkPtr == nullptr);
 
-                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, trunct);
+                KDSPDSetup::setup::handleMultipleFileSink(std::move(typeStr), std::move(table), sinkPtr, truncate);
 
                 CHECK(sinkPtr != nullptr);
 

@@ -22,7 +22,6 @@
 
 #include <toml.hpp>
 
-
 namespace KDSPDSetup::details {
 
 static auto const stdStrs{ std::vector<std::string>{ "stdout_sink_st", "stdout_sink_mt", "stdout_color_sink_st",
@@ -98,19 +97,19 @@ auto createRotatingFileSinkPtr(toml::table const &sinkTable, toml::string &&base
                                std::size_t const &maxFiles)
         -> std::shared_ptr<spdlog::sinks::rotating_file_sink<Mutex>>;
 
-auto createFileSinkTuple(toml::table const &sinkTable, bool const &trunct)
+auto createFileSinkTuple(toml::table const &sinkTable, bool const &truncate)
         -> std::tuple<toml::string const, bool const>;
 
 template<typename Mutex>
-auto createFileSinkPtr(toml::table const &sinkTable, bool const &trunct)
+auto createFileSinkPtr(toml::table const &sinkTable, bool const &truncate)
         -> std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>>;
 
-auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
+auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
                               uint16_t const &maxFiles)
         -> std::tuple<toml::string const, int const, int const, bool const, uint16_t const>;
 
 template<typename Mutex>
-auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &trunct, toml::string &&baseFilename,
+auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
                             uint16_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>;
 
 auto createNullSinkPtr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::details::null_mutex>>;
@@ -133,12 +132,12 @@ template<typename Mutex>
 auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>;
 #endif
 
-auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct) -> spdlog::sink_ptr;
+auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate) -> spdlog::sink_ptr;
 
 auto genFromRotateStr(toml::string &&typeStr, toml::table &&sinkTable, toml::string &&baseFilename,
                       std::size_t const &maxFiles) -> spdlog::sink_ptr;
 
-auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &trunct,
+auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate,
                      toml::string &&baseFilename, uint16_t const &maxFiles) -> spdlog::sink_ptr;
 
 auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr;
