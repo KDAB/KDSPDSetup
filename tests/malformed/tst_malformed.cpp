@@ -7,6 +7,46 @@ using namespace toml::literals::toml_literals;
 
 TEST_SUITE("Testing all functions with invalid args.")
 {
+    auto possible{ std::vector<std::string>{ "" } };
+
+    void checkInvalidNameNoSetup(toml::table && table)
+    {
+        CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
+        auto i{ 0 };
+        spdlog::details::registry::instance().apply_all([&i](auto log) {
+            ++i;
+            CHECK(log->name() == "");
+        });
+        CHECK(i == 1);
+    }
+
+    auto checkLogNames(std::string const logName, toml::table &&table, bool const shouldSetup)->std::shared_ptr<spdlog::logger>
+    {
+        if (shouldSetup)
+            CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
+        else
+            CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
+
+        auto logger = spdlog::get(logName);
+
+        if (shouldSetup)
+            CHECK(logger != nullptr);
+        else
+            CHECK(logger == nullptr);
+
+        if (shouldSetup)
+            possible.push_back(logName);
+
+        auto i{ 0 };
+        spdlog::details::registry::instance().apply_all([&i](auto log) {
+            ++i;
+            CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
+        });
+        CHECK(i == possible.size());
+
+        return logger;
+    }
+
     TEST_CASE("setupLogger")
     {
         CHECK(spdlog::get("") != nullptr); // weirdly this always exists?
@@ -32,14 +72,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = ["null_sink_st"]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-
-                auto i{ 0 };
-                spdlog::details::registry::instance().apply_all([&i](auto log) {
-                    ++i;
-                    CHECK(log->name() == "");
-                });
-                CHECK(i == 1);
+                checkInvalidNameNoSetup(std::move(table));
             }
 
             SUBCASE("name empty array")
@@ -49,14 +82,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = ["null_sink_st"]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-
-                auto i{ 0 };
-                spdlog::details::registry::instance().apply_all([&i](auto log) {
-                    ++i;
-                    CHECK(log->name() == "");
-                });
-                CHECK(i == 1);
+                checkInvalidNameNoSetup(std::move(table));
             }
 
             SUBCASE("name string array")
@@ -66,14 +92,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = ["null_sink_st"]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-
-                auto i{ 0 };
-                spdlog::details::registry::instance().apply_all([&i](auto log) {
-                    ++i;
-                    CHECK(log->name() == "");
-                });
-                CHECK(i == 1);
+                checkInvalidNameNoSetup(std::move(table));
             }
 
             SUBCASE("name integer array")
@@ -83,14 +102,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = ["null_sink_st"]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-
-                auto i{ 0 };
-                spdlog::details::registry::instance().apply_all([&i](auto log) {
-                    ++i;
-                    CHECK(log->name() == "");
-                });
-                CHECK(i == 1);
+                checkInvalidNameNoSetup(std::move(table));
             }
 
             SUBCASE("name mixed array")
@@ -100,14 +112,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = ["null_sink_st"]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-
-                auto i{ 0 };
-                spdlog::details::registry::instance().apply_all([&i](auto log) {
-                    ++i;
-                    CHECK(log->name() == "");
-                });
-                CHECK(i == 1);
+                checkInvalidNameNoSetup(std::move(table));
             }
         }
 
@@ -134,20 +139,10 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = ["console_st", "daily_out"]
                 )"_toml.as_table();
 
-                CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("non_existent_sinks");
-                CHECK(logger != nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 2);
+                auto logger{ checkLogNames("non_existent_sinks", std::move(table), true) };
 
                 CHECK(logger->sinks().size() == 0);
-                CHECK(logger->level() == spdlog::level::info); // why?
+                CHECK(logger->level() == spdlog::level::info);
                 CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
             }
 
@@ -158,21 +153,11 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = ["console_st", "sinks_null_sink_st"]
                 )"_toml.as_table();
 
-                CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("some_non_existent_sinks");
-                CHECK(logger != nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 3);
+                auto logger{ checkLogNames("some_non_existent_sinks", std::move(table), true) };
 
                 CHECK(logger->sinks().size() == 1);
                 CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("sinks_null_sink_st"));
-                CHECK(logger->level() == spdlog::level::info); // why?
+                CHECK(logger->level() == spdlog::level::info);
                 CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
             }
 
@@ -183,17 +168,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = 12
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("sinks_integer");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 3);
+                checkLogNames("sinks_integer", std::move(table), false);
             }
 
             SUBCASE("sinks string")
@@ -203,17 +178,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = "sinks_null_sink_st"
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("sinks_string");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 3);
+                checkLogNames("sinks_string", std::move(table), false);
             }
 
             SUBCASE("sinks empty array")
@@ -223,20 +188,10 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = []
                 )"_toml.as_table();
 
-                CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("sinks_empty_array");
-                CHECK(logger != nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                auto logger{ checkLogNames("sinks_empty_array", std::move(table), true) };
 
                 CHECK(logger->sinks().size() == 0);
-                CHECK(logger->level() == spdlog::level::info); // why?
+                CHECK(logger->level() == spdlog::level::info);
                 CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
             }
 
@@ -247,17 +202,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = [1, 2, 3]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("sinks_integer_array");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                checkLogNames("sinks_integer_array", std::move(table), false);
             }
 
             SUBCASE("sinks mixed array")
@@ -267,17 +212,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     sinks = [1, "sinks_null_sink_st"]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("sinks_mixed_array");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                checkLogNames("sinks_mixed_array", std::move(table), false);
             }
         }
 
@@ -303,17 +238,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     level = "dsfsdkjfh"
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("non_existent_level");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                checkLogNames("non_existent_level", std::move(table), false);
             }
 
             SUBCASE("level integer")
@@ -324,17 +249,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     level = 12
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("level_integer");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                checkLogNames("level_integer", std::move(table), false);
             }
 
             SUBCASE("level empty array")
@@ -345,17 +260,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     level = []
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("level_empty_array");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                checkLogNames("level_empty_array", std::move(table), false);
             }
 
             SUBCASE("level integer array")
@@ -366,17 +271,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     level = [1, 2, 3]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("level_integer_array");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                checkLogNames("level_integer_array", std::move(table), false);
             }
 
             SUBCASE("level string array")
@@ -387,17 +282,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     level = ["info"]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("level_string_array");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                checkLogNames("level_string_array", std::move(table), false);
             }
 
             SUBCASE("level mixed array")
@@ -408,17 +293,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                     level = ["info", 1]
                 )"_toml.as_table();
 
-                CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                auto logger = spdlog::get("level_mixed_array");
-                CHECK(logger == nullptr);
-
-                auto i{ 0 };
-                auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array" };
-                spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                    ++i;
-                    CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                });
-                CHECK(i == 4);
+                checkLogNames("level_mixed_array", std::move(table), false);
             }
         }
 
@@ -445,21 +320,11 @@ TEST_SUITE("Testing all functions with invalid args.")
                         sinks = ["global_pattern_null_sink_mt"]
                     )"_toml.as_table();
 
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("no_pattern_and_no_global_pattern");
-                    CHECK(logger != nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 5);
+                    auto logger{ checkLogNames("no_pattern_and_no_global_pattern", std::move(table), true) };
 
                     CHECK(logger->sinks().size() == 1);
                     CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info); // why????
+                    CHECK(logger->level() == spdlog::level::info);
                     CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
                     // no way to really check pattern here
                 }
@@ -475,21 +340,11 @@ TEST_SUITE("Testing all functions with invalid args.")
                         sinks = ["global_pattern_null_sink_mt"]
                     )"_toml.as_table();
 
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("global_pattern_invalid");
-                    CHECK(logger != nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 6);
+                    auto logger{ checkLogNames("global_pattern_invalid", std::move(table), true) };
 
                     CHECK(logger->sinks().size() == 1);
                     CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info); // why????
+                    CHECK(logger->level() == spdlog::level::info);
                     CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
                     // no way to really check pattern here
                 }
@@ -505,21 +360,11 @@ TEST_SUITE("Testing all functions with invalid args.")
                         sinks = ["global_pattern_null_sink_mt"]
                     )"_toml.as_table();
 
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("global_pattern_integer");
-                    CHECK(logger != nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 7);
+                    auto logger{ checkLogNames("global_pattern_integer", std::move(table), true) };
 
                     CHECK(logger->sinks().size() == 1);
                     CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info); // why????
+                    CHECK(logger->level() == spdlog::level::info);
                     CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
                 }
 
@@ -534,21 +379,11 @@ TEST_SUITE("Testing all functions with invalid args.")
                         sinks = ["global_pattern_null_sink_mt"]
                     )"_toml.as_table();
 
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("global_pattern_empty_array");
-                    CHECK(logger != nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 8);
+                    auto logger{ checkLogNames("global_pattern_empty_array", std::move(table), true) };
 
                     CHECK(logger->sinks().size() == 1);
                     CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info); // why????
+                    CHECK(logger->level() == spdlog::level::info);
                     CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
                 }
 
@@ -563,21 +398,11 @@ TEST_SUITE("Testing all functions with invalid args.")
                         sinks = ["global_pattern_null_sink_mt"]
                     )"_toml.as_table();
 
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("global_pattern_integer_array");
-                    CHECK(logger != nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 9);
+                    auto logger{ checkLogNames("global_pattern_integer_array", std::move(table), true) };
 
                     CHECK(logger->sinks().size() == 1);
                     CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info); // why????
+                    CHECK(logger->level() == spdlog::level::info);
                     CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
                 }
 
@@ -592,21 +417,11 @@ TEST_SUITE("Testing all functions with invalid args.")
                         sinks = ["global_pattern_null_sink_mt"]
                     )"_toml.as_table();
 
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("global_pattern_string_array");
-                    CHECK(logger != nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array", "global_pattern_string_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 10);
+                    auto logger{ checkLogNames("global_pattern_string_array", std::move(table), true) };
 
                     CHECK(logger->sinks().size() == 1);
                     CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info); // why????
+                    CHECK(logger->level() == spdlog::level::info);
                     CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
                 }
 
@@ -621,21 +436,11 @@ TEST_SUITE("Testing all functions with invalid args.")
                         sinks = ["global_pattern_null_sink_mt"]
                     )"_toml.as_table();
 
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("global_pattern_mixed_array");
-                    CHECK(logger != nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array", "global_pattern_string_array", "global_pattern_mixed_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 11);
+                    auto logger{ checkLogNames("global_pattern_mixed_array", std::move(table), true) };
 
                     CHECK(logger->sinks().size() == 1);
                     CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info); // why????
+                    CHECK(logger->level() == spdlog::level::info);
                     CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
                 }
             }
@@ -667,17 +472,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                         pattern = "dshdksfjh"
                     )"_toml.as_table();
 
-                    CHECK_THROWS(KDSPDSetup::setup::setupLogger(table)); // throws due to map::at on name that isnt there
-                    auto logger = spdlog::get("non_existent_pattern");
-                    CHECK(logger == nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array", "global_pattern_string_array", "global_pattern_mixed_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 11);
+                    checkLogNames("non_existent_pattern", std::move(table), false);
                 }
 
                 SUBCASE("pattern integer")
@@ -688,17 +483,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                         pattern = 12
                     )"_toml.as_table();
 
-                    CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("pattern_integer");
-                    CHECK(logger == nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array", "global_pattern_string_array", "global_pattern_mixed_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 11);
+                    checkLogNames("pattern_integer", std::move(table), false);
                 }
 
                 SUBCASE("pattern empty array")
@@ -709,17 +494,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                         pattern = []
                     )"_toml.as_table();
 
-                    CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("pattern_empty_array");
-                    CHECK(logger == nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array", "global_pattern_string_array", "global_pattern_mixed_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 11);
+                    checkLogNames("pattern_empty_array", std::move(table), false);
                 }
 
                 SUBCASE("pattern integer array")
@@ -730,17 +505,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                         pattern = [1, 2, 3]
                     )"_toml.as_table();
 
-                    CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("pattern_integer_array");
-                    CHECK(logger == nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array", "global_pattern_string_array", "global_pattern_mixed_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 11);
+                    checkLogNames("pattern_integer_array", std::move(table), false);
                 }
 
                 SUBCASE("pattern string array")
@@ -751,17 +516,7 @@ TEST_SUITE("Testing all functions with invalid args.")
                         pattern = ["succient"]
                     )"_toml.as_table();
 
-                    CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("pattern_string_array");
-                    CHECK(logger == nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array", "global_pattern_string_array", "global_pattern_mixed_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 11);
+                    checkLogNames("pattern_string_array", std::move(table), false);
                 }
 
                 SUBCASE("pattern mixed array")
@@ -772,80 +527,87 @@ TEST_SUITE("Testing all functions with invalid args.")
                         pattern = ["succient", 1]
                     )"_toml.as_table();
 
-                    CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-                    auto logger = spdlog::get("pattern_mixed_array");
-                    CHECK(logger == nullptr);
-
-                    int i{ 0 };
-                    auto const possible = std::vector<std::string>{ "", "non_existent_sinks", "some_non_existent_sinks", "sinks_empty_array", "no_pattern_and_no_global_pattern", "global_pattern_invalid", "global_pattern_integer", "global_pattern_empty_array", "global_pattern_integer_array", "global_pattern_string_array", "global_pattern_mixed_array" };
-                    spdlog::details::registry::instance().apply_all([&i, &possible](auto log) {
-                        ++i;
-                        CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-                    });
-                    CHECK(i == 11);
+                    checkLogNames("pattern_mixed_array", std::move(table), false);
                 }
             }
         }
 
         SUBCASE("type and async")
         {
+            auto value = u8R"(
+                [[thread_pool]]
+                name = "tp"
+                queue_size = 4096
+                num_threads = 2
+
+                [[sink]]
+                name = "async_null_sink_mt"
+                type = "null_sink_mt"
+            )"_toml;
+
+            KDSPDSetup::setup::setupSinks(value);
+            KDSPDSetup::setup::setupThreadPools(value);
+
+            CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("async_null_sink_mt"));
+            CHECK(KDSPDSetup::details::SPDMaps::threadPoolMap().contains("tp"));
+
             SUBCASE("type other than async")
             {
+                CHECK_NOTHROW(KDSPDSetup::setup::setupThreadPools(value));
+
                 auto table = u8R"(
-                    global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                    [[sink]]
-                    name = "null_sink_mt"
-                    type = "null_sink_mt"
-
-                    [[logger]]
                     type = "dkjlfhsdk"
-                    name = "root"
-                    sinks = ["null_sink_mt"]
-                )"_toml;
+                    name = "type_other_than_async"
+                    sinks = ["async_null_sink_mt"]
+                )"_toml.as_table();
 
-                // test somehow
+                auto logger{ checkLogNames("type_other_than_async", std::move(table), true) };
+
+                CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                CHECK(dynamic_cast<spdlog::logger *>(logger.get()) != nullptr);
+
+                CHECK(logger->sinks().size() == 1);
+                CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("async_null_sink_mt"));
+                CHECK(logger->level() == spdlog::level::info);
+                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
             }
 
             SUBCASE("non-async with thread pool")
             {
                 auto table = u8R"(
-                    global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                    [[sink]]
-                    name = "null_sink_mt"
-                    type = "null_sink_mt"
-
-                    [[thread_pool]]
-                    name = "tp"
-                    queue_size = 4096
-                    num_threads = 2
-
-                    [[logger]]
-                    name = "root"
-                    sinks = ["null_sink_mt"]
+                    name = "non_async_with_thread_pool"
+                    sinks = ["async_null_sink_mt"]
                     thread_pool = "tp"
-                )"_toml;
+                )"_toml.as_table();
 
-                // test somehow
+                auto logger{ checkLogNames("non_async_with_thread_pool", std::move(table), true) };
+
+                CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                CHECK(dynamic_cast<spdlog::logger *>(logger.get()) != nullptr);
+
+                CHECK(logger->sinks().size() == 1);
+                CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("async_null_sink_mt"));
+                CHECK(logger->level() == spdlog::level::info);
+                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
             }
 
             SUBCASE("non-async with overflow policy")
             {
                 auto table = u8R"(
-                    global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                    [[sink]]
-                    name = "null_sink_mt"
-                    type = "null_sink_mt"
-
-                    [[logger]]
-                    name = "root"
-                    sinks = ["null_sink_mt"]
+                    name = "non_async_with_overflow_policy"
+                    sinks = ["async_null_sink_mt"]
                     overflow_policy = "overrun_oldest"
-                )"_toml;
+                )"_toml.as_table();
 
-                // test somehow
+                auto logger{ checkLogNames("non_async_with_overflow_policy", std::move(table), true) };
+
+                CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                CHECK(dynamic_cast<spdlog::logger *>(logger.get()) != nullptr);
+
+                CHECK(logger->sinks().size() == 1);
+                CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("async_null_sink_mt"));
+                CHECK(logger->level() == spdlog::level::info);
+                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
             }
 
             SUBCASE("thread pool")
@@ -853,163 +615,110 @@ TEST_SUITE("Testing all functions with invalid args.")
                 SUBCASE("no thread pool and no global thread pool")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
-                    )"_toml;
+                        name = "no_thread_pool_and_no_global_thread_pool"
+                        sinks = ["async_null_sink_mt"]
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("no_thread_pool_and_no_global_thread_pool", std::move(table), true) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) != nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) != nullptr);
+
+                    CHECK(logger->sinks().size() == 1);
+                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("async_null_sink_mt"));
+                    CHECK(logger->level() == spdlog::level::info);
+                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
                 }
 
                 SUBCASE("invalid thread pool")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "invalid_thread_pool"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = "dfskjfhsdk"
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("thread pool integer")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "thread_pool_integer"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = 12
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("thread pool empty array")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "thread_pool_empty_array"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = []
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("thread pool integer array")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "thread_pool_integer_array"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = [1, 2, 3]
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("thread pool string array")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "thread_pool_string_array"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = ["tp"]
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("thread pool mixed array")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "thread_pool_mixed_array"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = ["tp", 1]
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
             }
 
@@ -1018,155 +727,103 @@ TEST_SUITE("Testing all functions with invalid args.")
                 SUBCASE("invalid overflow policy")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "invalid_overflow_policy"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = "tp"
                         overflow_policy = "sdljkkj"
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("overflow policy integer")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "overflow_policy_integer"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = "tp"
                         overflow_policy = 12
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("overflow policy empty array")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "overflow_policy_empty_array"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = "tp"
                         overflow_policy = []
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("overflow policy integer array")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "overflow_policy_integer_array"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = "tp"
                         overflow_policy = [1, 2, 3]
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("overflow policy string array")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "overflow_policy_string_array"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = "tp"
                         overflow_policy = ["overrun_oldest"]
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
 
                 SUBCASE("overflow policy mixed array")
                 {
                     auto table = u8R"(
-                        global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                        [[sink]]
-                        name = "null_sink_mt"
-                        type = "null_sink_mt"
-
-                        [[thread_pool]]
-                        name = "tp"
-                        queue_size = 4096
-                        num_threads = 2
-
-                        [[logger]]
                         type = "async"
-                        name = "root"
-                        sinks = ["null_sink_mt"]
+                        name = "overflow_policy_mixed_array"
+                        sinks = ["async_null_sink_mt"]
                         thread_pool = "tp"
                         overflow_policy = ["overrun_oldest", 1]
-                    )"_toml;
+                    )"_toml.as_table();
 
-                    // test somehow
+                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
+
+                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
+                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
                 }
             }
         }
     }
+
+    // for now i think there are diminishing returns doing the below tests
 
     TEST_CASE("setupLoggers")
     {
