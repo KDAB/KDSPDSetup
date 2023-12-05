@@ -9,14 +9,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-option(BUILD_TESTS "Build unit tests" ON)
-option(BUILD_EXAMPLES "Build the example project" ON)
+option(KDSPDSETUP_BUILD_TESTS "Build unit tests" ON)
+option(KDSPDSETUP_BUILD_EXAMPLES "Build the example project" ON)
 set(SPDLOG_INSTALL ON)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake)
 
 set(LINKLIBS $<BUILD_INTERFACE:spdlog> $<BUILD_INTERFACE:toml11>)
-if(BUILD_TESTS)
+if(KDSPDSETUP_BUILD_TESTS)
   list(APPEND LINKLIBS $<BUILD_INTERFACE:doctest>)
 endif()
 
@@ -25,12 +25,12 @@ add_library(kdspdsetup STATIC src/kdspdsetup.cpp src/details.cpp src/setup.cpp)
 
 target_link_libraries(kdspdsetup PUBLIC ${LINKLIBS})
 
-if(BUILD_TESTS)
+if(KDSPDSETUP_BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()
 
-if(BUILD_EXAMPLES)
+if(KDSPDSETUP_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
 

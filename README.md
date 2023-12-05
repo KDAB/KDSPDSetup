@@ -5,7 +5,7 @@
          ▄██─────█▌▄▌▪██▪ ██ ▐█ ▀. ▐█ ▄███▪ ██ ▐█ ▀. ▀▄.▀·•██  █▪██▌▐█ ▄█
    ▄▀██▀█▀█▀███▀─▐▀▀▄·▐█· ▐█▌▄▀▀▀█▄ ██▀·▐█· ▐█▌▄▀▀▀█▄▐▀▀▪▄ ▐█.▪█▌▐█▌ ██▀·
  ▀▀▀▀▀████▀▀▀────▐█.█▌██. ██ ▐█▄▪▐█▐█▪·•██. ██ ▐█▄▪▐█▐█▄▄▌ ▐█▌·▐█▄█▌▐█▪·•
-       ▀██───────·▀  ▀▀▀▀▀▀•  ▀▀▀▀ .▀   ▀▀▀▀▀•  ▀▀▀▀  ▀▀▀  ▀▀▀  ▀▀▀ .▀   
+       ▀██───────·▀  ▀▀▀▀▀▀•  ▀▀▀▀ .▀   ▀▀▀▀▀•  ▀▀▀▀  ▀▀▀  ▀▀▀  ▀▀▀ .▀
 ```
 
 ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
@@ -48,10 +48,11 @@ You will need a compiler that supports the C++20 standard.
 The following should be sufficient (still needs testing):
 
 | ![GNU Badge](https://img.shields.io/badge/gcc-A42E2B?logo=gnu&logoColor=fff&style=for-the-badge) | ![LLVM Badge](https://img.shields.io/badge/clang-262D3A?logo=llvm&logoColor=fff&style=for-the-badge) | ![Visual Studio Badge](https://img.shields.io/badge/msvc-5C2D91?logo=visualstudio&logoColor=fff&style=for-the-badge) | ![NVIDIA Badge](https://img.shields.io/badge/nvcc-76B900?logo=nvidia&logoColor=fff&style=for-the-badge) | ![Intel Badge](https://img.shields.io/badge/Intel%20C++-0071C5?logo=intel&logoColor=fff&style=for-the-badge) |
-| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --- | ---
-| GCC 10+                                                                                          | Clang 8+                                                                                             | MSVC 19.22+                                                                                                          | NVCC 12.0+ | Intel C++ 2021.1+
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| GCC 10+                                                                                          | Clang 8+                                                                                             | MSVC 19.22+                                                                                                          | NVCC 12.0+                                                                                              | Intel C++ 2021.1+                                                                                            |
 
 ## Dependencies
+
 Aside from the obvious dependencies [spdlog](https://github.com/gabime/spdlog) and
 [fmt](https://github.com/fmtlib/fmt), there are two additional dependencies:
 
@@ -76,12 +77,12 @@ Install <...> (WIP)
 
 ### Tests
 
-You can build the unit tests by passing the flag `-DBUILD_TESTS` to CMake. The dependency [doctest](https://github.com/doctest/doctest)
+You can build the unit tests by passing the flag `-DKDSPDSETUP_BUILD_TESTS` to CMake. The dependency [doctest](https://github.com/doctest/doctest)
 will only be used when this flag is on.
 
 ### Examples
 
-To build the basic examples, pass the flag `-DBUILD_EXAMPLES` to CMake.
+To build the basic examples, pass the flag `-DKDSPDSETUP_BUILD_EXAMPLES` to CMake.
 
 ## Configuration
 
