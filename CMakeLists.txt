@@ -11,6 +11,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 option(KDSPDSETUP_BUILD_TESTS "Build unit tests" ON)
 option(KDSPDSETUP_BUILD_EXAMPLES "Build the example project" ON)
+option(KDSPDSETUP_BUILD_DOCS "Build Doxygen documentation" ON)
 set(SPDLOG_INSTALL ON)
 
 include(FeatureSummary)
@@ -33,4 +34,8 @@ endif()
 
 if(KDSPDSETUP_BUILD_EXAMPLES)
   add_subdirectory(examples)
+endif()
+
+if(KDSPDSETUP_BUILD_DOCS)
+  add_subdirectory(docs)
 endif()

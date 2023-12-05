@@ -24,8 +24,18 @@
 
 #include <string>
 
+/**
+ * @brief The only public-facing namespace in the library.
+ * 
+ */
 namespace KDSPDSetup {
 
+/**
+ * @brief This function performs all setup needed to start logging.
+ * It should be the only callable part of the library.
+ * 
+ * @param file The toml configuration file to read from.
+ */
 void setupFrom(std::string const &file);
 
 } // namespace KDSPDSetup
