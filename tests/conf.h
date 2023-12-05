@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kdspdsetup.h>
+#include <KDSpdSetup/kdspdsetup.h>
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 

@@ -1,8 +1,8 @@
-#include <kdspdsetup.h>
+#include <KDSpdSetup/kdspdsetup.h>
 
 int main()
 {
-    KDSPDSetup::setupFrom("example.toml");
+    KDSPDSetup::setupFrom("../examples/example.toml");
 
     for (std::string &&name : { "root", "console", "global_async", "local_async" }) {
         auto logger = spdlog::get(name);

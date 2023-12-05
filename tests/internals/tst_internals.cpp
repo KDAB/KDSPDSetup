@@ -1,6 +1,6 @@
 #include "../conf.h"
-#include <../src/details.h>
-#include <../src/setup.h>
+#include <KDSpdSetup/details.h>
+#include <KDSpdSetup/setup.h>
 #include <doctest/doctest.h>
 
 TEST_SUITE("Tests for internals")

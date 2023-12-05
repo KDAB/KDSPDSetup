@@ -1,5 +1,6 @@
-#include <../include/kdspdsetup.h>
-#include "setup.h"
+#include "kdspdsetup.h"
+
+#include <KDSpdSetup/setup.h>
 
 namespace KDSPDSetup {
 

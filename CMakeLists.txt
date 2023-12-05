@@ -13,17 +13,18 @@ option(KDSPDSETUP_BUILD_TESTS "Build unit tests" ON)
 option(KDSPDSETUP_BUILD_EXAMPLES "Build the example project" ON)
 set(SPDLOG_INSTALL ON)
 
+include(FeatureSummary)
+include(GNUInstallDirs)
+
+# Note: Set before including dependencies.cmake, so 3rd party libs end up in the
+# correct dir
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake)
 
-set(LINKLIBS $<BUILD_INTERFACE:spdlog> $<BUILD_INTERFACE:toml11>)
-if(KDSPDSETUP_BUILD_TESTS)
-  list(APPEND LINKLIBS $<BUILD_INTERFACE:doctest>)
-endif()
-
-include_directories(kdspdsetup include)
-add_library(kdspdsetup STATIC src/kdspdsetup.cpp src/details.cpp src/setup.cpp)
-
-target_link_libraries(kdspdsetup PUBLIC ${LINKLIBS})
+add_subdirectory(src/KDSpdSetup)
 
 if(KDSPDSETUP_BUILD_TESTS)
   enable_testing()
@@ -33,32 +34,3 @@ endif()
 if(KDSPDSETUP_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
-
-include(GNUInstallDirs)
-
-set(KDSPDSETUP_CMAKE_CONFIG_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/kdspdsetup")
-
-include(CMakePackageConfigHelpers)
-configure_package_config_file(
-  cmake/kdspdsetupConfig.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/kdspdsetupConfig.cmake"
-  INSTALL_DESTINATION "${KDSPDSETUP_CMAKE_CONFIG_DIR}")
-
-install(
-  TARGETS kdspdsetup
-  EXPORT kdspdsetup
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-install(FILES "include/kdspdsetup.h"
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/kdspdsetup)
-
-install(
-  EXPORT kdspdsetup
-  FILE kdspdsetup.cmake
-  DESTINATION "${KDSPDSETUP_CMAKE_CONFIG_DIR}"
-  NAMESPACE kdspdsetup::)
-
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/kdspdsetupConfig.cmake"
-        DESTINATION "${KDSPDSETUP_CMAKE_CONFIG_DIR}")
