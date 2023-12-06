@@ -1,3 +1,12 @@
+# This file is part of KDSpdSetup.
+#
+# SPDX-FileCopyrightText: 2023 Klarälvdalens Datakonsult AB, a KDAB Group
+# company <info@kdab.com>
+#
+# SPDX-License-Identifier: MIT
+#
+# Contact KDAB at <info@kdab.com> for commercial licensing options.
+#
 function(add_kdspdsetup_test NAME SOURCES)
   set(TARGET_NAME test_kdspdsetup_${NAME})
   add_executable(${TARGET_NAME} ${SOURCES})
