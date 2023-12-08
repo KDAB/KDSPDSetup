@@ -23,6 +23,8 @@ option(KDSPDSETUP_BUILD_EXAMPLES "Build the example project" ON)
 option(KDSPDSETUP_BUILD_DOCS "Build Doxygen documentation" ON)
 set(SPDLOG_INSTALL ON)
 
+message("\nCompiler: ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_VERSION}\n")
+
 include(FeatureSummary)
 include(GNUInstallDirs)
 
