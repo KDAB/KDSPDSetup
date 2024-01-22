@@ -20,12 +20,12 @@ if(NOT TARGET doctest)
     )
     set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${tmp})
 
-    FetchContent_Declare(
+    fetchcontent_declare(
         doctest
         GIT_REPOSITORY https://github.com/doctest/doctest.git
         GIT_TAG master
     )
-    FetchContent_MakeAvailable(doctest)
+    fetchcontent_makeavailable(doctest)
 
     set_target_properties(
         doctest

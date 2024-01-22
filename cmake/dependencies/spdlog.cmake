@@ -20,12 +20,12 @@ if(NOT TARGET spdlog::spdlog)
     )
     set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${tmp})
 
-    FetchContent_Declare(
+    fetchcontent_declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.11.0
     )
-    FetchContent_MakeAvailable(spdlog)
+    fetchcontent_makeavailable(spdlog)
 
     set_target_properties(
         spdlog

@@ -1,14 +1,21 @@
-[//]: <> ( This file is part of KDSpdSetup.                                        )
-[//]: <> (                                                                         )
-[//]: <> ( SPDX-FileCopyrightText: 2023 Klarälvdalens Datakonsult AB, a KDAB Group )
-[//]: <> ( company <info@kdab.com>                                                 )
-[//]: <> (                                                                         )
-[//]: <> ( SPDX-License-Identifier: MIT                                            )
-[//]: <> (                                                                         )
-[//]: <> ( Contact KDAB at <info@kdab.com> for commercial licensing options.       )
-[//]: <> (                                                                         )
+<!--
+This file is part of KDSpdSetup.
 
-```
+SPDX-FileCopyrightText: 2023 Klarälvdalens Datakonsult AB, a KDAB Group
+company <info@kdab.com> 
+
+SPDX-License-Identifier: MIT 
+
+Contact KDAB at <info@kdab.com> for commercial licensing options.
+-->
+
+<!-- markdownlint-disable MD036 -->
+<!-- markdownlint-disable MD014 -->
+<!-- markdownlint-disable MD033 -->
+
+# KDSPDSetup
+
+```text
             ▄────▄ •▄ ·▄▄▄▄  .▄▄ ·  ▄▄▄··▄▄▄▄  .▄▄ · ▄▄▄ .▄▄▄▄▄▄• ▄▌ ▄▄▄·
          ▄██─────█▌▄▌▪██▪ ██ ▐█ ▀. ▐█ ▄███▪ ██ ▐█ ▀. ▀▄.▀·•██  █▪██▌▐█ ▄█
    ▄▀██▀█▀█▀███▀─▐▀▀▄·▐█· ▐█▌▄▀▀▀█▄ ██▀·▐█· ▐█▌▄▀▀▀█▄▐▀▀▪▄ ▐█.▪█▌▐█▌ ██▀·
@@ -17,8 +24,6 @@
 ```
 
 ![MIT License](https://img.shields.io/badge/MIT_LICENSE-darkgreen?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEiIHdpZHRoPSIyNSIgaGVpZ2h0PSIyNSI+PHBhdGggZD0iTTEyLjc1IDIuNzVWNC41aDEuOTc1Yy4zNTEgMCAuNjk0LjEwNi45ODQuMzAzbDEuNjk3IDEuMTU0Yy4wNDEuMDI4LjA5LjA0My4xNC4wNDNoNC4xMDJhLjc1Ljc1IDAgMCAxIDAgMS41SDIwLjA3bDMuMzY2IDcuNjhhLjc0OS43NDkgMCAwIDEtLjIzLjg5NmMtLjEuMDc0LS4yMDMuMTQzLS4zMS4yMDZhNi4yOTYgNi4yOTYgMCAwIDEtLjc5LjM5OSA3LjM0OSA3LjM0OSAwIDAgMS0yLjg1Ni41NjkgNy4zNDMgNy4zNDMgMCAwIDEtMi44NTUtLjU2OCA2LjIwNSA2LjIwNSAwIDAgMS0uNzktLjQgMy4yMDUgMy4yMDUgMCAwIDEtLjMwNy0uMjAybC0uMDA1LS4wMDRhLjc0OS43NDkgMCAwIDEtLjIzLS44OTZsMy4zNjgtNy42OGgtLjg4NmMtLjM1MSAwLS42OTQtLjEwNi0uOTg0LS4zMDNsLTEuNjk3LTEuMTU0YS4yNDYuMjQ2IDAgMCAwLS4xNC0uMDQzSDEyLjc1djE0LjVoNC40ODdhLjc1Ljc1IDAgMCAxIDAgMS41SDYuNzYzYS43NS43NSAwIDAgMSAwLTEuNWg0LjQ4N1Y2SDkuMjc1YS4yNDkuMjQ5IDAgMCAwLS4xNC4wNDNMNy40MzkgNy4xOTdjLS4yOS4xOTctLjYzMy4zMDMtLjk4NC4zMDNoLS44ODZsMy4zNjggNy42OGEuNzUuNzUgMCAwIDEtLjIwOS44NzhjLS4wOC4wNjUtLjE2LjEyNi0uMzEuMjIzYTYuMDc3IDYuMDc3IDAgMCAxLS43OTIuNDMzIDYuOTI0IDYuOTI0IDAgMCAxLTIuODc2LjYyIDYuOTEzIDYuOTEzIDAgMCAxLTIuODc2LS42MiA2LjA3NyA2LjA3NyAwIDAgMS0uNzkyLS40MzMgMy40ODMgMy40ODMgMCAwIDEtLjMwOS0uMjIxLjc2Mi43NjIgMCAwIDEtLjIxLS44OEwzLjkzIDcuNUgyLjM1M2EuNzUuNzUgMCAwIDEgMC0xLjVoNC4xMDJjLjA1IDAgLjA5OS0uMDE1LjE0MS0uMDQzbDEuNjk1LTEuMTU0Yy4yOS0uMTk4LjYzNC0uMzAzLjk4NS0uMzAzaDEuOTc0VjIuNzVhLjc1Ljc1IDAgMCAxIDEuNSAwWk0yLjE5MyAxNS4xOThhNS40MTQgNS40MTQgMCAwIDAgMi41NTcuNjM1IDUuNDE0IDUuNDE0IDAgMCAwIDIuNTU3LS42MzVMNC43NSA5LjM2OFptMTQuNTEtLjAyNGMuMDgyLjA0LjE3NC4wODMuMjc1LjEyNi41My4yMjMgMS4zMDUuNDUgMi4yNzIuNDVhNS44NDcgNS44NDcgMCAwIDAgMi41NDctLjU3NkwxOS4yNSA5LjM2N1oiIGZpbGw9IiNmZmYiPjwvcGF0aD48L3N2Zz4=)![C++](https://img.shields.io/badge/c%2B%2B-red?style=for-the-badge&logo=c%2B%2B)![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white)![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0)
-
-# KDSPDSetup
 
 ## Overview
 
@@ -79,7 +84,7 @@ Aside from [spdlog](https://github.com/gabime/spdlog), there are three additiona
 | ------------- | --------------------------------------------- | ---------- |
 | TOML parsing  | [toml11](https://github.com/ToruNiina/toml11) | Always     |
 | Testing       | [doctest](https://github.com/doctest/doctest) | Tests only |
-| Documentation | [doxygen]() | Documentation only |
+| Documentation | [doxygen](https://github.com/doxygen/doxygen) | Documentation only |
 
 These dependencies will be automatically downloaded if not found.
 
@@ -94,24 +99,29 @@ _** NOTE: all the flags are still on by default and should probably be turned of
 You'll need at least CMake 3.5 to build this library.
 
 To configure and build, use the following `cmake` commands:
+
 ```bash
 $ cmake -S <source-dir> -B <build-dir> <flags>
 $ cmake --build <build-dir>
 ```
+
 where `<source-dir>` is the root directory of this project and `<build-dir>` is the desired build directory.
 
 `<flags>` can be empty or contain one or more of the flags detailed in the [Tests](#tests), [Examples](#examples), and [Documentation](#documentation) sections below.
 
 For example, from this directory one might run the following:
+
 ```bash
 $ cmake -S . -B build
 $ cmake --build build
 ```
+
 which creates the directory `build` if it does not exist, configures CMake, and builds the project.
 
 ### Install
 
 To install the library on your system, after completing the steps in the [Build](#build) section above, run the following command:
+
 ```bash
 $ sudo cmake --install <build-dir>
 ```
@@ -145,7 +155,7 @@ $ cmake -S <source-dir> -B <build-dir> -DKDSPDSETUP_BUILD_DOCS
 $ cmake --build <build-dir>
 ```
 
-The dependency [doxygen]() will only be used when this flag is on.
+The dependency [doxygen](https://github.com/doxygen/doxygen) will only be used when this flag is on.
 
 ## Usage
 
@@ -154,11 +164,13 @@ The dependency [doxygen]() will only be used when this flag is on.
 To use the library in a CMake project, make sure to [install](#install) the library.
 
 Then, simply write the following line in your `CMakeLists.txt`:
+
 ```cmake
 find_package(KDSpdSetup)
 ```
 
 and after adding your target, let's call it `untitled`, link with this CMake command:
+
 ```cmake
 target_link_libraries(untitled KDSpdSetup::KDSpdSetup)
 ```
@@ -197,6 +209,7 @@ The list below fully details these:
 |`daily_file_sink_st`<br>`daily_file_sink_mt`|`base_filename`<br>`rotation_hour`<br>`rotation_minute`|`string`<br>`int`<br>`int`|
 
 The following sink types can specify the boolean `truncate`, which defaults to `false` if not specified.
+
 - `basic_file_sink_st`<br>`basic_file_sink_mt`
 - `rotating_file_sink_st`<br>`rotating_file_sink_mt`
 - `daily_file_sink_st`<br>`daily_file_sink_mt`
@@ -236,6 +249,7 @@ _** NOTE: `color_stdout_sink_st` and `color_stdout_sink_mt` are not yet supporte
 #### Patterns
 
 The global pattern is defined as a free-standing key-value pair (not under a `[[pattern]]` or any other table):
+
 ```c
 global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
 ```
@@ -328,6 +342,7 @@ The options for overflow policy are `"block"` and `"overrun_oldest"`. If not spe
 #### Example Files
 
 This repository contains a few example configuration files:
+
 - `examples/example.toml`
 - `tests/full/full-linux.toml`
 - `tests/full/full-linux.toml`

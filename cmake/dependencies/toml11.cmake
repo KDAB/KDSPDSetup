@@ -20,12 +20,12 @@ if(NOT TARGET toml11)
     )
     set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${tmp})
 
-    FetchContent_Declare(
+    fetchcontent_declare(
         toml11
         GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
         GIT_TAG master
     )
-    FetchContent_MakeAvailable(toml11)
+    fetchcontent_makeavailable(toml11)
 
     set_target_properties(
         toml11

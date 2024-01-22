@@ -10,9 +10,10 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(
-  kdspdsetup
-  LANGUAGES CXX
-  VERSION 0.1)
+    kdspdsetup
+    LANGUAGES CXX
+    VERSION 0.1
+)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,14 +40,14 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake)
 add_subdirectory(src/KDSpdSetup)
 
 if(KDSPDSETUP_BUILD_TESTS)
-  enable_testing()
-  add_subdirectory(tests)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 if(KDSPDSETUP_BUILD_EXAMPLES)
-  add_subdirectory(examples)
+    add_subdirectory(examples)
 endif()
 
 if(KDSPDSETUP_BUILD_DOCS)
-  add_subdirectory(docs)
+    add_subdirectory(docs)
 endif()
