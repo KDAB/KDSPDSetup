@@ -1,10 +1,10 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: KDSpdSetup
 Upstream-Contact: <info@kdab.com>
-Source: 
+Source:
 
 # config files
-Files: .clang-format .gitignore .gitreview .pre-commit-config.yaml .cmake-format.py
+Files: .clang-format .gitignore .gitreview .pre-commit-config.yaml .cmake-format.py .krazy
 Copyright: Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 License: MIT
 
