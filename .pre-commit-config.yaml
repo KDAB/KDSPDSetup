@@ -3,6 +3,7 @@
 ci:
     autoupdate_schedule: monthly
 
+exclude: (docs/doxygen-awesome.css)
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.5.0
