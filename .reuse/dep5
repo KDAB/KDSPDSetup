@@ -4,7 +4,7 @@ Upstream-Contact: <info@kdab.com>
 Source:
 
 # config files
-Files: .clang-format .gitignore .gitreview .pre-commit-config.yaml .cmake-format.py .krazy
+Files: .clang-format .gitignore .gitreview .pre-commit-config.yaml .cmake-format.py .krazy .mdlrc .mdlrc.rb
 Copyright: Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 License: MIT
 
