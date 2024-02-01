@@ -825,10 +825,185 @@ TEST_SUITE("Tests for internals")
         }
     }
 
-    TEST_CASE("std_sink_ptr")
+    TEST_CASE("stdout_sink_ptr")
     {
-        SUBCASE("")
+        SUBCASE("stdout_sink_st")
         {
+            toml::table cTable{ { "name", "console_st" },
+                                { "type", "stdout_sink_st" } };
+
+            SUBCASE("sink_ptr")
+            {
+                auto table = cTable;
+
+                auto sinkPtr = KDSPDSetup::details::createStdoutSinkStPtr();
+
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::stdout_sink_st>));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("genFrom")
+            {
+                auto table = cTable;
+                auto typeStr = table.at("type").as_string();
+
+                auto sinkPtr = KDSPDSetup::details::genFromNullOrStdStr(std::move(typeStr));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("setupSink")
+            {
+                auto table = cTable;
+
+                CHECK(!KDSPDSetup::details::SPDMaps::sinkMap().contains("console_st"));
+
+                KDSPDSetup::setup::setupSink(std::move(table));
+
+                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("console_st"));
+
+                auto sinkPtr = KDSPDSetup::details::SPDMaps::sinkMap().at("console_st");
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+        }
+
+        SUBCASE("stdout_sink_mt")
+        {
+            toml::table cTable{ { "name", "console_mt" },
+                                { "type", "stdout_sink_mt" } };
+
+            SUBCASE("sink_ptr")
+            {
+                auto table = cTable;
+
+                auto sinkPtr = KDSPDSetup::details::createStdoutSinkMtPtr();
+
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::stdout_sink_mt>));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("genFrom")
+            {
+                auto table = cTable;
+                auto typeStr = table.at("type").as_string();
+
+                auto sinkPtr = KDSPDSetup::details::genFromNullOrStdStr(std::move(typeStr));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("setupSink")
+            {
+                auto table = cTable;
+
+                CHECK(!KDSPDSetup::details::SPDMaps::sinkMap().contains("console_mt"));
+
+                KDSPDSetup::setup::setupSink(std::move(table));
+
+                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("console_mt"));
+
+                auto sinkPtr = KDSPDSetup::details::SPDMaps::sinkMap().at("console_mt");
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+        }
+    }
+
+    TEST_CASE("color_stdout_sink_ptr")
+    {
+        SUBCASE("color_stdout_sink_st")
+        {
+            toml::table cTable{ { "name", "color_console_st" },
+                                { "type", "color_stdout_sink_st" } };
+
+            SUBCASE("sink_ptr")
+            {
+                auto table = cTable;
+
+                auto sinkPtr = KDSPDSetup::details::createStdoutColorSinkStPtr();
+
+#ifdef _WIN32
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_st>));
+#else
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::ansicolor_stdout_sink_st>));
+#endif
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("genFrom")
+            {
+                auto table = cTable;
+                auto typeStr = table.at("type").as_string();
+
+                auto sinkPtr = KDSPDSetup::details::genFromNullOrStdStr(std::move(typeStr));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("setupSink")
+            {
+                auto table = cTable;
+
+                CHECK(!KDSPDSetup::details::SPDMaps::sinkMap().contains("color_console_st"));
+
+                KDSPDSetup::setup::setupSink(std::move(table));
+
+                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("color_console_st"));
+
+                auto sinkPtr = KDSPDSetup::details::SPDMaps::sinkMap().at("color_console_st");
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+        }
+
+        SUBCASE("stdout_sink_mt")
+        {
+            toml::table cTable{ { "name", "color_console_mt" },
+                                { "type", "color_stdout_sink_mt" } };
+
+            SUBCASE("sink_ptr")
+            {
+                auto table = cTable;
+
+                auto sinkPtr = KDSPDSetup::details::createStdoutColorSinkMtPtr();
+
+#ifdef _WIN32
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::wincolor_stdout_sink_mt>));
+#else
+                CHECK(typeid(sinkPtr) == typeid(std::shared_ptr<spdlog::sinks::ansicolor_stdout_sink_mt>));
+#endif
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("genFrom")
+            {
+                auto table = cTable;
+                auto typeStr = table.at("type").as_string();
+
+                auto sinkPtr = KDSPDSetup::details::genFromNullOrStdStr(std::move(typeStr));
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
+
+            SUBCASE("setupSink")
+            {
+                auto table = cTable;
+
+                CHECK(!KDSPDSetup::details::SPDMaps::sinkMap().contains("color_console_mt"));
+
+                KDSPDSetup::setup::setupSink(std::move(table));
+
+                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("color_console_mt"));
+
+                auto sinkPtr = KDSPDSetup::details::SPDMaps::sinkMap().at("color_console_mt");
+
+                CHECK(sinkPtr->level() == spdlog::level::trace);
+            }
         }
     }
 #ifdef __linux__

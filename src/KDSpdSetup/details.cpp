@@ -81,28 +81,10 @@ auto createRotatingFileSinkTuple(toml::table const &sinkTable, toml::string &&ba
     return std::make_tuple(std::move(baseFilename), maxSizeInt, maxFiles);
 }
 
-template<typename Mutex>
-auto createRotatingFileSinkPtr(toml::table const &sinkTable, toml::string &&baseFilename,
-                               std::size_t const &maxFiles)
-        -> std::shared_ptr<spdlog::sinks::rotating_file_sink<Mutex>>
-{
-    auto tup = createRotatingFileSinkTuple(sinkTable, std::move(baseFilename), maxFiles);
-    return std::make_shared<spdlog::sinks::rotating_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup),
-                                                                      std::get<2>(tup));
-}
-
 auto createFileSinkTuple(toml::table const &sinkTable, bool const &truncate) -> std::tuple<toml::string const, bool const>
 {
     auto fileName = sinkTable.at("filename").as_string();
     return std::make_tuple(std::move(fileName), truncate);
-}
-
-template<typename Mutex>
-auto createFileSinkPtr(toml::table const &sinkTable, bool const &truncate)
-        -> std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>>
-{
-    auto tup = createFileSinkTuple(sinkTable, truncate);
-    return std::make_shared<spdlog::sinks::basic_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup));
 }
 
 auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
@@ -115,32 +97,10 @@ auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &truncate, tom
     return std::make_tuple(std::move(baseFilename), rotationHour, rotationMinute, truncate, maxFiles);
 }
 
-template<typename Mutex>
-auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
-                            uint16_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>
-{
-    auto tup = createDailyFileSinkTuple(std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
-    return std::make_shared<spdlog::sinks::daily_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
-                                                                   std::get<3>(tup), std::get<4>(tup));
-}
-
 auto createNullSinkPtr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::details::null_mutex>>
 {
     return std::make_shared<spdlog::sinks::null_sink<spdlog::details::null_mutex>>();
 }
-
-template<typename Mutex>
-auto createStdoutSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_sink<Mutex>>
-{
-    return std::make_shared<spdlog::sinks::stdout_sink<Mutex>>();
-}
-
-//////// needs work
-// template<typename Mutex>
-// auto createStdoutColorSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_color_sink_st<Mutex>>
-// {
-//     return std::make_shared<spdlog::sinks::stdout_color_sink<Mutex>>();
-// }
 
 #ifdef __linux__
 auto createSyslogSinkTuple(toml::table const &sinkTable)
@@ -156,21 +116,6 @@ auto createSyslogSinkTuple(toml::table const &sinkTable)
     bool enableFormatting = true;
 
     return std::make_tuple(std::move(ident), syslogOption, syslogFacility, enableFormatting);
-}
-
-template<typename Mutex>
-auto createSyslogSinkPtr(toml::table &&sinkTable) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>
-{
-    auto tup = createSyslogSinkTuple(std::move(sinkTable));
-    return std::make_shared<spdlog::sinks::syslog_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
-                                                               std::get<3>(tup));
-}
-
-#elif _WIN32
-template<typename Mutex>
-auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>
-{
-    return std::make_shared<spdlog::sinks::msvc_sink<Mutex>>();
 }
 #endif
 
@@ -224,10 +169,10 @@ auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr
         return createStdoutSinkMtPtr();
     }
     if (typeStr == "stdout_color_sink_st" || typeStr == "color_stdout_sink_st") {
-        return std::make_shared<spdlog::sinks::stdout_color_sink_st>(); // still needs work
+        return createStdoutColorSinkStPtr();
     }
     if (typeStr == "stdout_color_sink_mt" || typeStr == "color_stdout_sink_mt") {
-        return std::make_shared<spdlog::sinks::stdout_color_sink_mt>(); // still needs work
+        return createStdoutColorSinkMtPtr();
     }
 
     return nullptr;
