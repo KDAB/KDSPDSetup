@@ -18,9 +18,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-option(KDSPDSETUP_BUILD_TESTS "Build unit tests" ON)
+option(KDSPDSETUP_BUILD_TESTS "Build unit tests" OFF)
 option(KDSPDSETUP_BUILD_EXAMPLES "Build the example project" ON)
-option(KDSPDSETUP_BUILD_DOCS "Build Doxygen documentation" ON)
+option(KDSPDSETUP_BUILD_DOCS "Build Doxygen documentation" OFF)
+
 set(SPDLOG_INSTALL ON)
 
 message("\nCompiler: ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_VERSION}\n")

@@ -1,0 +1,94 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build-${presetName}"
+        },
+        {
+            "name": "dev-base",
+            "hidden": true,
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "KDSPDSETUP_BUILD_TESTS": "ON",
+                "KDSPDSETUP_BUILD_DOCS": "ON"
+            }
+        },
+        {
+            "name": "release-base",
+            "hidden": true,
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "gcc-base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "clang-base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang"
+            }
+        },
+        {
+            "name": "msvc-base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "msvc",
+                "CMAKE_CXX_COMPILER": "msvc"
+            }
+        },
+        {
+            "name": "dev-gcc",
+            "inherits": [
+                "dev-base",
+                "gcc-base"
+            ]
+        },
+        {
+            "name": "dev-clang",
+            "inherits": [
+                "dev-base",
+                "clang-base"
+            ]
+        },
+        {
+            "name": "dev-msvc",
+            "inherits": [
+                "dev-base",
+                "msvc-base"
+            ]
+        },
+        {
+            "name": "release-gcc",
+            "inherits": [
+                "release-base",
+                "gcc-base"
+            ]
+        },
+        {
+            "name": "release-clang",
+            "inherits": [
+                "release-base",
+                "clang-base"
+            ]
+        },
+        {
+            "name": "release-msvc",
+            "inherits": [
+                "release-base",
+                "msvc-base"
+            ]
+        }
+    ]
+}
