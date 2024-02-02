@@ -328,7 +328,8 @@ bool inTypelist(std::string const &typeStr, std::vector<std::string> const &strL
  * @param baseFilename The base filename to later pass into the constructor for `spdlog::sinks::rotating_file_sink`.
  * @param maxFiles The maximum number of files. This is later passed into the constructor for
  * `spdlog::sinks::rotating_file_sink`.
- * @return std::tuple<toml::string const, std::size_t const, std::size_t const>
+ * @return std::tuple<toml::string const, std::size_t const, std::size_t const> A tuple containing the argument list
+ * for rotating file sink constructor.
  */
 auto createRotatingFileSinkTuple(toml::table const &sinkTable, toml::string &&baseFilename,
                                  std::size_t const &maxFiles)
@@ -366,7 +367,7 @@ auto createRotatingFileSinkPtr(toml::table const &sinkTable, toml::string &&base
  *
  * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
  * @param truncate The value of `truncate` to pass into the constructor for basic file sink.
- * @return std::tuple<toml::string const, bool const>
+ * @return std::tuple<toml::string const, bool const> A tuple containing the argument list for basic file sink constructor.
  */
 auto createFileSinkTuple(toml::table const &sinkTable, bool const &truncate)
         -> std::tuple<toml::string const, bool const>;
@@ -404,7 +405,8 @@ auto createFileSinkPtr(toml::table const &sinkTable, bool const &truncate)
  * @param truncate The value of `truncate` to pass into the constructor for daily file sink.
  * @param baseFilename The base filename to pass into the constructor for daily file sink.
  * @param maxFiles The maximum number of files. This is passed into the constructor for daily file sink.
- * @return std::tuple<toml::string const, int const, int const, bool const, uint16_t const>
+ * @return std::tuple<toml::string const, int const, int const, bool const, uint16_t const> A tuple containing
+ * the argument list for daily file sink constructor.
  */
 auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
                               uint16_t const &maxFiles)
@@ -443,7 +445,7 @@ auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &truncate, toml:
 auto createNullSinkPtr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::details::null_mutex>>;
 
 /**
- * @brief Create a basic file sink shared pointer and return it. The macros `createStdoutSinkStPtr` and
+ * @brief Create a standard output sink shared pointer and return it. The macros `createStdoutSinkStPtr` and
  * `createStdoutSinkMtPtr` exist to improve readability and clarity of intent when calling this function.
  *
  * @tparam Mutex The template parameter to pass to the sink object. Will be either `spdlog::details::console_nullmutex`
@@ -459,10 +461,14 @@ auto createStdoutSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_sink<Mutex>>
 
 #ifdef _WIN32
 /**
- * @brief TODO TODO TODO
+ * @brief Create an color standard output sink shared pointer and return it. The macros `createStdoutColorSinkStPtr`
+ * and `createStdoutColorSinkMtPtr` exist to improve readability and clarity of intent when calling this function.
+ * On Windows, the sink is a `wincolor_stdout_sink`, while on other platforms, it is an `ansicolor_stdout_sink`.
  *
- * @tparam Mutex
- * @return std::shared_ptr<spdlog::sinks::wincolor_stdout_sink<Mutex>>
+ * @tparam Mutex The template parameter to pass to the sink object. Will be either `spdlog::details::console_nullmutex`
+ * or `spdlog::details::console_mutex`, for single-threaded or multi-threaded sinks respectively.
+ * @return std::shared_ptr<spdlog::sinks::wincolor_stdout_sink<Mutex>> A color standard output sink pointer that
+ * can be upcast to an `spdlog::sink_ptr` and added to an entry in KDSPDSetup::details::SPDMaps::mSinkMap.
  */
 template<typename Mutex>
 auto createStdoutColorSinkPtr() -> std::shared_ptr<spdlog::sinks::wincolor_stdout_sink<Mutex>>
@@ -472,10 +478,14 @@ auto createStdoutColorSinkPtr() -> std::shared_ptr<spdlog::sinks::wincolor_stdou
 
 #else
 /**
- * @brief TODO TODO TODO
+ * @brief Create an color standard output sink shared pointer and return it. The macros `createStdoutColorSinkStPtr`
+ * and `createStdoutColorSinkMtPtr` exist to improve readability and clarity of intent when calling this function.
+ * On Windows, the sink is a `wincolor_stdout_sink`, while on other platforms, it is an `ansicolor_stdout_sink`.
  *
- * @tparam Mutex
- * @return std::shared_ptr<spdlog::sinks::ansicolor_stdout_sink<Mutex>>
+ * @tparam Mutex The template parameter to pass to the sink object. Will be either `spdlog::details::console_nullmutex`
+ * or `spdlog::details::console_mutex`, for single-threaded or multi-threaded sinks respectively.
+ * @return std::shared_ptr<spdlog::sinks::ansicolor_stdout_sink<Mutex>> A color standard output sink pointer that
+ * can be upcast to an `spdlog::sink_ptr` and added to an entry in KDSPDSetup::details::SPDMaps::mSinkMap.
  */
 template<typename Mutex>
 auto createStdoutColorSinkPtr() -> std::shared_ptr<spdlog::sinks::ansicolor_stdout_sink<Mutex>>
@@ -495,7 +505,8 @@ auto createStdoutColorSinkPtr() -> std::shared_ptr<spdlog::sinks::ansicolor_stdo
  * constructor for syslog sink.
  *
  * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @return std::tuple<toml::string const, int const, int const, bool const>
+ * @return std::tuple<toml::string const, int const, int const, bool const> A tuple containing the argument list
+ * for syslog sink constructor.
  */
 auto createSyslogSinkTuple(toml::table const &sinkTable)
         -> std::tuple<toml::string const, int const, int const, bool const>;
