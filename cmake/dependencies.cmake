@@ -15,6 +15,10 @@ message(STATUS "Checking/updating dependencies. This may take a little while...
     Set the FETCHCONTENT_QUIET option to OFF to get verbose output.
 "
 )
+if(KDSPDSETUP_BUILD_DOCS)
+    # doxygen
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/doxygen.cmake)
+endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/toml11.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/spdlog.cmake)
