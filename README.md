@@ -75,15 +75,13 @@ Aside from [spdlog](https://github.com/gabime/spdlog), there are three additiona
 
 These dependencies will be automatically downloaded if not found.
 
-_** NOTE: doxygen is not automatically downloaded if not found yet **_
-
 ## Build & Install
 
 ### Build
 
-_** NOTE: all the flags are still on by default and should probably be turned off **_
-
 You'll need at least CMake 3.5 to build this library.
+
+You can skip to the [CMake Presets](#cmake-presets) section if you'd like to use a preset that will set the source and build directories for you, along with some flags.
 
 To configure and build, use the following `cmake` commands:
 
@@ -104,6 +102,29 @@ $ cmake --build build
 ```
 
 which creates the directory `build` if it does not exist, configures CMake, and builds the project.
+
+### CMake Presets
+
+There are a number of CMake presets included. These will configure a build with specific flags set for either development or release.
+
+`dev-*` configurations enable tests, examples, and local documentation. They also build in CMake's `Debug` mode, which will enable debug symbols and will NOT use compiler optimization flags.
+`release-*` configurations will not build tests, examples, or documentation. They build in CMake's `Release` mode, which will use compiler optimization and will NOT build with debug symbols.
+
+- `dev-gcc`
+- `dev-clang`
+- `dev-msvc`
+- `release-gcc`
+- `release-clang`
+- `release-msvc`
+
+To build from this directory with a preset (we'll use `dev-gcc` as an example), one would run the following:
+
+```bash
+$ cmake --preset dev-gcc
+$ cmake --build build-dev-gcc
+```
+
+Note that for preset name `presetName` the build directory will be titled `build-presetName`.
 
 ### Install
 
@@ -187,7 +208,7 @@ level = "err"
 
 Some sink types require additional fields, or allow additional optional fields.
 
-The list below fully details these:
+The list below details the sink types which have additional required fields:
 
 |`type`|required field|value type
 |-|-|-
@@ -195,11 +216,7 @@ The list below fully details these:
 |`rotating_file_sink_st`<br>`rotating_file_sink_mt`|`base_filename`<br>`max_size`<br>`max_files`|`string`<br>`string`<br>`int`
 |`daily_file_sink_st`<br>`daily_file_sink_mt`|`base_filename`<br>`rotation_hour`<br>`rotation_minute`|`string`<br>`int`<br>`int`
 
-The following sink types can specify the boolean `truncate`, which defaults to `false` if not specified.
-
-- `basic_file_sink_st`<br>`basic_file_sink_mt`
-- `rotating_file_sink_st`<br>`rotating_file_sink_mt`
-- `daily_file_sink_st`<br>`daily_file_sink_mt`
+All of the above sink types can also optionally specify the boolean `truncate`, which defaults to `false` if not specified.
 
 The syslog sink types, `syslog_sink_st` and `syslog_sink_mt`, have four optional fields that generally do not need to be filled (but can be if needed):
 |key name|value type|default value
