@@ -1,7 +1,7 @@
 CMakeLists.txt.user
 CMakeUserPresets.json
 .vscode/
-build-*/
+build*/
 log/
 clean
 lib/
