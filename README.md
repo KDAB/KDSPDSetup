@@ -107,8 +107,9 @@ which creates the directory `build` if it does not exist, configures CMake, and 
 
 There are a number of CMake presets included. These will configure a build with specific flags set for either development or release.
 
-`dev-*` configurations enable tests, examples, and local documentation. They also build in CMake's `Debug` mode, which will enable debug symbols and will NOT use compiler optimization flags.
-`release-*` configurations will not build tests, examples, or documentation. They build in CMake's `Release` mode, which will use compiler optimization and will NOT build with debug symbols.
+`dev-*` configurations will add tests and documentation to the build targets. They also build in CMake's `Debug` mode, which will enable debug symbols and will NOT use compiler optimization flags.
+`release-*` configurations will not build tests or documentation. They build in CMake's `Release` mode, which will use compiler optimization and will NOT build with debug symbols.
+Examples will be built with both types of preset unless explicitly disabled with [`-DKDSPDSETUP_BUILD_EXAMPLES=OFF`](#examples).
 
 - `dev-gcc`
 - `dev-clang`
@@ -136,7 +137,7 @@ $ sudo cmake --install <build-dir>
 
 ### Tests
 
-You can build the unit tests by passing the flag `-DKDSPDSETUP_BUILD_TESTS` to CMake:
+You can build the unit tests by passing the flag `-DKDSPDSETUP_BUILD_TESTS=ON` to CMake:
 
 ```bash
 $ cmake -S <source-dir> -B <build-dir> -DKDSPDSETUP_BUILD_TESTS
@@ -147,16 +148,18 @@ The dependency [doctest](https://github.com/doctest/doctest) will only be used w
 
 ### Examples
 
-To build the basic examples, pass the flag `-DKDSPDSETUP_BUILD_EXAMPLES` to CMake:
+Building examples is on by default.
+
+To disable the basic examples, pass the flag `-DKDSPDSETUP_BUILD_EXAMPLES=OFF` to CMake:
 
 ```bash
-$ cmake -S <source-dir> -B <build-dir> -DKDSPDSETUP_BUILD_EXAMPLES
+$ cmake -S <source-dir> -B <build-dir> -DKDSPDSETUP_BUILD_EXAMPLES=OFF
 $ cmake --build <build-dir>
 ```
 
 ### Documentation
 
-To build the documentation, pass the flag `-DKDSPDSETUP_BUILD_DOCS` to CMake.
+To build the documentation, pass the flag `-DKDSPDSETUP_BUILD_DOCS=ON` to CMake.
 
 ```bash
 $ cmake -S <source-dir> -B <build-dir> -DKDSPDSETUP_BUILD_DOCS
