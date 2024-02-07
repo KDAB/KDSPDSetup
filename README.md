@@ -365,11 +365,9 @@ Huge thanks to [guangie88](https://github.com/guangie88) for providing these exa
 
 ## Licensing
 
-KDSPDSetup is (C) 2023, Klarälvdalens Datakonsult AB, and is available under the terms of the [MIT](LICENSE.txt) license.
+KDSPDSetup is (C) 2023, Klarälvdalens Datakonsult AB, and is available under the terms of the [MIT](LICENSES/MIT.txt) license.
 
 Contact KDAB at <info@kdab.com> if you need different licensing options.
-
-_** NOTE: the MIT link above does not work in the Doxygen docs because it links to LICENSE.txt, which can't be found from the built docs directory. Once this is a public repo, the url for the license file should be put there instead **_
 
 ## About KDAB
 
