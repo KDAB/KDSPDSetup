@@ -63,6 +63,8 @@ The following compiler versions should be sufficient, but this has not been full
 |-|-|-|-|-
 | GCC 10+ | Clang 8+ | MSVC 19.22+ | NVCC 12.0+ | Intel C++ 2021.1+
 
+If any [dependencies](#dependencies) are not found, CMake's FetchContent will use [`git`](https://git-scm.com/) to retrieve them. Thus, `git` is also a requirement in this case.
+
 ## Dependencies
 
 Aside from [spdlog](https://github.com/gabime/spdlog), there are three additional dependencies:
@@ -73,7 +75,7 @@ Aside from [spdlog](https://github.com/gabime/spdlog), there are three additiona
 | Testing       | [doctest](https://github.com/doctest/doctest) | Tests only
 | Documentation | [doxygen](https://github.com/doxygen/doxygen) | Documentation only
 
-These dependencies will be automatically downloaded if not found.
+These dependencies will be automatically downloaded with `git` if not found.
 
 ## Build & Install
 
@@ -108,8 +110,12 @@ which creates the directory `build` if it does not exist, configures CMake, and 
 There are a number of CMake presets included. These will configure a build with specific flags set for either development or release.
 
 `dev-*` configurations will add tests and documentation to the build targets. They also build in CMake's `Debug` mode, which will enable debug symbols and will NOT use compiler optimization flags.
+
 `release-*` configurations will not build tests or documentation. They build in CMake's `Release` mode, which will use compiler optimization and will NOT build with debug symbols.
+
 Examples will be built with both types of preset unless explicitly disabled with [`-DKDSPDSETUP_BUILD_EXAMPLES=OFF`](#examples).
+
+Here are all the presets:
 
 - `dev-gcc`
 - `dev-clang`
