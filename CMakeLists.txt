@@ -6,7 +6,7 @@
 #
 # Contact KDAB at <info@kdab.com> for commercial licensing options.
 #
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 
 project(
     kdspdsetup
