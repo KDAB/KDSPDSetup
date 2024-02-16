@@ -83,7 +83,7 @@ These dependencies will be automatically downloaded with `git` if not found.
 
 ### Build
 
-You'll need at least CMake 3.5 to build this library.
+You'll need at least CMake 3.11 to build this library.
 
 You can skip to the [CMake Presets](#cmake-presets) section if you'd like to use a preset that will set the source and build directories for you, along with some flags.
 
