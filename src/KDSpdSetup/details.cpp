@@ -174,6 +174,18 @@ auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr
     if (typeStr == "stdout_color_sink_mt" || typeStr == "color_stdout_sink_mt") {
         return createStdoutColorSinkMtPtr();
     }
+    if (typeStr == "stderr_sink_st") {
+        return createStderrSinkStPtr();
+    }
+    if (typeStr == "stderr_sink_mt") {
+        return createStderrSinkMtPtr();
+    }
+    if (typeStr == "stderr_color_sink_st" || typeStr == "color_stderr_sink_st") {
+        return createStderrColorSinkStPtr();
+    }
+    if (typeStr == "stderr_color_sink_mt" || typeStr == "color_stderr_sink_mt") {
+        return createStderrColorSinkMtPtr();
+    }
 
     return nullptr;
 }
