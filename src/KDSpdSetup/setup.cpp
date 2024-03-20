@@ -9,6 +9,10 @@
 */
 #include "setup.h"
 
+#include <iostream>
+
+using std::literals::string_literals::operator""s;
+
 namespace KDSPDSetup::setup {
 
 void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &truncate)
@@ -43,6 +47,17 @@ void setupSink(toml::table &&sinkTable)
     auto const name = sinkTable.at("name").as_string();
     auto typeStr = sinkTable.at("type").as_string();
 
+    bool ok = false;
+    for (auto &typeList : { details::fileStrs, details::rotateStrs, details::dailyStrs, details::nullStrs, details::stdStrs, details::linuxStrs, details::winStrs }) {
+        if (details::inTypelist(typeStr, typeList)) {
+            ok = true;
+            break;
+        }
+    }
+
+    if (!ok)
+        throw std::out_of_range("KDSPDSetup: sink type "s + typeStr.str + " is not valid"s);
+
     toml::string level = "";
     if (sinkTable.contains("level")) {
         level = sinkTable.at("level").as_string();
@@ -72,6 +87,9 @@ void setupSink(toml::table &&sinkTable)
     }
 
     if (level != "") {
+        if (!details::levelMap.contains(level))
+            throw std::out_of_range("KDSPDSetup: level "s + level.str + " not found"s);
+
         sinkPtr->set_level(details::levelMap.at(level));
     }
 
@@ -137,6 +155,9 @@ void registerAsynchronousLogger(toml::table const &loggerTable, toml::string con
     static std::shared_ptr<spdlog::details::thread_pool> threadPoolPtr;
 
     if (threadPool != "") {
+        if (!details::SPDMaps::threadPoolMap().contains(threadPool))
+            throw std::out_of_range("KDSPDSetup: threadpool "s + threadPool.str + " not found"s);
+
         auto const threadPoolPair = details::SPDMaps::threadPoolMap().at(threadPool);
         auto const queueSize = threadPoolPair.first;
         auto const numThreads = threadPoolPair.second;
@@ -147,6 +168,9 @@ void registerAsynchronousLogger(toml::table const &loggerTable, toml::string con
 
     auto const overflowPolicy =
             (loggerTable.contains("overflow_policy")) ? loggerTable.at("overflow_policy").as_string() : "block";
+
+    if (!details::overflowMap.contains(overflowPolicy))
+        throw std::out_of_range("KDSPDSetup: overflow policy "s + overflowPolicy.str + " not found"s);
 
     auto logger = std::make_shared<spdlog::async_logger>(name, sinkList.begin(), sinkList.end(), std::move(threadPoolPtr),
                                                          details::overflowMap.at(overflowPolicy));
@@ -168,6 +192,10 @@ void registerSynchronousLogger(toml::table const &loggerTable, toml::string cons
 
     if (loggerTable.contains("level")) {
         auto const level = loggerTable.at("level").as_string();
+
+        if (!details::levelMap.contains(level))
+            throw std::out_of_range("KDSPDSetup: level "s + level.str + " not found"s);
+
         logger->set_level(details::levelMap.at(level));
     }
 
@@ -187,11 +215,21 @@ void setupLogger(toml::table const &loggerTable)
     for (auto &&sink : sinks) {
         if (details::SPDMaps::sinkMap().contains(sink.as_string())) {
             sinkList.emplace_back(details::SPDMaps::sinkMap().at(sink.as_string()));
+        } else {
+            // ignore sink instead of throwing, but notify that this happens
+            std::cerr << "KDSPDSetup: setting up logger " << name
+                      << " - skipped sink " << sink.as_string().str << " as it was not found";
         }
     }
 
-    auto const pattern =
-            (loggerTable.contains("pattern")) ? details::SPDMaps::patternMap().at(loggerTable.at("pattern").as_string()) : "";
+    std::string pattern = "";
+
+    if (loggerTable.contains("pattern")) {
+        if (!details::SPDMaps::patternMap().contains(loggerTable.at("pattern").as_string()))
+            throw std::out_of_range("KDSPDSetup: pattern "s + loggerTable.at("pattern").as_string().str + " not found"s);
+
+        pattern = details::SPDMaps::patternMap().at(loggerTable.at("pattern").as_string());
+    }
 
     auto const type = (loggerTable.contains("type")) ? loggerTable.at("type").as_string() : "";
 
