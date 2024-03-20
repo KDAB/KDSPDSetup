@@ -47,7 +47,9 @@ namespace KDSPDSetup::details {
  */
 static auto const stdStrs{ std::vector<std::string>{ "stdout_sink_st", "stdout_sink_mt", "stdout_color_sink_st",
                                                      "stdout_color_sink_mt", "color_stdout_sink_st",
-                                                     "color_stdout_sink_mt" } };
+                                                     "color_stdout_sink_mt", "stderr_sink_st", "stderr_sink_mt",
+                                                     "stderr_color_sink_st", "stderr_color_sink_mt",
+                                                     "color_stderr_sink_st", "color_stderr_sink_mt" } };
 
 /**
  * @brief Vector of strings of `spdlog` basic file sink typenames. Used when matching a `type` string
@@ -265,6 +267,9 @@ private:
  */
 #define createStdoutSinkMtPtr createStdoutSinkPtr<spdlog::details::console_mutex>
 
+#define createStderrSinkStPtr createStderrSinkPtr<spdlog::details::console_nullmutex>
+#define createStderrSinkMtPtr createStderrSinkPtr<spdlog::details::console_mutex>
+
 /**
  * @brief A macro alias to improve readability of calls to KDSPDSetup::details::createStdoutColorSinkPtr.
  *
@@ -276,6 +281,9 @@ private:
  *
  */
 #define createStdoutColorSinkMtPtr createStdoutColorSinkPtr<spdlog::details::console_mutex>
+
+#define createStderrColorSinkStPtr createStderrColorSinkPtr<spdlog::details::console_nullmutex>
+#define createStderrColorSinkMtPtr createStderrColorSinkPtr<spdlog::details::console_mutex>
 
 #ifdef __linux__
 /**
@@ -459,6 +467,12 @@ auto createStdoutSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_sink<Mutex>>
     return std::make_shared<spdlog::sinks::stdout_sink<Mutex>>();
 }
 
+template<typename Mutex>
+auto createStderrSinkPtr() -> std::shared_ptr<spdlog::sinks::stderr_sink<Mutex>>
+{
+    return std::make_shared<spdlog::sinks::stderr_sink<Mutex>>();
+}
+
 #ifdef _WIN32
 /**
  * @brief Create an color standard output sink shared pointer and return it. The macros `createStdoutColorSinkStPtr`
@@ -472,6 +486,12 @@ auto createStdoutSinkPtr() -> std::shared_ptr<spdlog::sinks::stdout_sink<Mutex>>
  */
 template<typename Mutex>
 auto createStdoutColorSinkPtr() -> std::shared_ptr<spdlog::sinks::wincolor_stdout_sink<Mutex>>
+{
+    return std::make_shared<spdlog::sinks::wincolor_stdout_sink<Mutex>>();
+}
+
+template<typename Mutex>
+auto createStderrColorSinkPtr() -> std::shared_ptr<spdlog::sinks::wincolor_stderr_sink<Mutex>>
 {
     return std::make_shared<spdlog::sinks::wincolor_stdout_sink<Mutex>>();
 }
@@ -491,6 +511,12 @@ template<typename Mutex>
 auto createStdoutColorSinkPtr() -> std::shared_ptr<spdlog::sinks::ansicolor_stdout_sink<Mutex>>
 {
     return std::make_shared<spdlog::sinks::ansicolor_stdout_sink<Mutex>>();
+}
+
+template<typename Mutex>
+auto createStderrColorSinkPtr() -> std::shared_ptr<spdlog::sinks::ansicolor_stderr_sink<Mutex>>
+{
+    return std::make_shared<spdlog::sinks::ansicolor_stderr_sink<Mutex>>();
 }
 
 #endif
