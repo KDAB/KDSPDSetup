@@ -4,5 +4,6 @@ CMakeUserPresets.json
 build*/
 log/
 clean
+reinst
 lib/
 Testing/
