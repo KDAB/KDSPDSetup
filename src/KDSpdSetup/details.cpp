@@ -214,6 +214,16 @@ auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr
 
     return nullptr;
 }
+#elif __ANDROID__
+auto genFromAndroidStr(toml::string &&typeStr, toml::string &&tag, bool const useRawMsg) -> spdlog::sink_ptr
+{
+    if (typeStr == "android_sink_st") {
+        return createAndroidSinkStPtr(std::move(tag), useRawMsg);
+    }
+    if (typeStr == "android_sink_mt") {
+        return createAndroidSinkMtPtr(std::move(tag), useRawMsg);
+    }
+}
 #endif
 
 } // namespace KDSPDSetup::details

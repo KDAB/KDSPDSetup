@@ -48,7 +48,7 @@ void setupSink(toml::table &&sinkTable)
     auto typeStr = sinkTable.at("type").as_string();
 
     bool ok = false;
-    for (auto &typeList : { details::fileStrs, details::rotateStrs, details::dailyStrs, details::nullStrs, details::stdStrs, details::linuxStrs, details::winStrs }) {
+    for (auto &typeList : { details::fileStrs, details::rotateStrs, details::dailyStrs, details::nullStrs, details::stdStrs, details::linuxStrs, details::winStrs, details::androidStrs }) {
         if (details::inTypelist(typeStr, typeList)) {
             ok = true;
             break;
@@ -81,6 +81,14 @@ void setupSink(toml::table &&sinkTable)
     } else if (details::inTypelist(typeStr, details::winStrs)) {
 #ifdef _WIN32
         sinkPtr = details::genFromWinStr(std::move(typeStr));
+#else
+        return;
+#endif
+    } else if (details::inTypelist(typeStr, details::androidStrs)) {
+#ifdef __ANDROID__
+        auto tag = (sinkTable.contains("tag")) ? sinkTable.at("tag").as_string() : "spdlog";
+        auto const useRawMsg = (sinkTable.contains("use_raw_msg")) ? sinkTable.at("use_raw_msg").as_boolean() : false;
+        sinkPtr = details::genFromAndroidStr(std::move(typeStr), std::move(tag), useRawMsg);
 #else
         return;
 #endif
