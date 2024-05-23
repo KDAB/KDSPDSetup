@@ -28,6 +28,7 @@
 #elif _WIN32
 #include <spdlog/sinks/msvc_sink.h>
 #endif
+#include <spdlog/sinks/ringbuffer_sink.h>
 
 #include <toml.hpp>
 
@@ -92,6 +93,8 @@ static auto const linuxStrs{ std::vector<std::string>{ "syslog_sink_st", "syslog
  *
  */
 static auto const winStrs{ std::vector<std::string>{ "msvc_sink_st", "msvc_sink_mt" } };
+
+static auto const ringBufferStrs{ std::vector<std::string>{ "ringbuffer_sink_st", "ringbuffer_sink_mt" } };
 
 /**
  * @brief A simple map associating strings of `spdlog::level::level_enum` names to the enums themselves.
@@ -311,6 +314,10 @@ private:
  */
 #define createMsvcSinkMtPtr createMsvcSinkPtr<std::mutex>
 #endif
+
+#define createRingBufferSinkStPtr createRingBufferSinkPtr<spdlog::details::null_mutex>
+
+#define createRingBufferSinkMtPtr createRingBufferSinkPtr<std::mutex>
 
 /**
  * @brief Returns true if a string `typeStr` is present in a vector `strList`, and false if not.
@@ -574,6 +581,12 @@ auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>
 }
 #endif
 
+template<typename Mutex>
+auto createRingBufferSinkPtr(std::size_t const nItems) -> std::shared_ptr<spdlog::sinks::ringbuffer_sink<Mutex>>
+{
+    return std::make_shared<spdlog::sinks::ringbuffer_sink<Mutex>>(nItems);
+}
+
 /**
  * @brief Return the result of calling KDSPDSetup::details::createFileSinkPtr with the correct template argument
  * based on the value of `typeStr`. Uses macros `createFileSinkStPtr` and `createFileSinkMtPtr` for clarity.
@@ -650,5 +663,7 @@ auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog:
 auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr;
 
 #endif
+
+auto genFromRingBufferStr(toml::string &&typeStr, const std::size_t nItems) -> spdlog::sink_ptr;
 
 } // namespace KDSPDSetup::details
