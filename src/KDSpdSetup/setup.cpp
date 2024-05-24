@@ -48,7 +48,7 @@ void setupSink(toml::table &&sinkTable)
     auto typeStr = sinkTable.at("type").as_string();
 
     bool ok = false;
-    for (auto &typeList : { details::fileStrs, details::rotateStrs, details::dailyStrs, details::nullStrs, details::stdStrs, details::linuxStrs, details::winStrs }) {
+    for (auto &typeList : { details::fileStrs, details::rotateStrs, details::dailyStrs, details::nullStrs, details::stdStrs, details::linuxStrs, details::winStrs, details::ringBufferStrs }) {
         if (details::inTypelist(typeStr, typeList)) {
             ok = true;
             break;
@@ -84,6 +84,11 @@ void setupSink(toml::table &&sinkTable)
 #else
         return;
 #endif
+    }
+
+    else if (details::inTypelist(typeStr, details::ringBufferStrs)) {
+        auto const nItems = static_cast<size_t>(sinkTable.at("n_items").as_integer());
+        sinkPtr = details::genFromRingBufferStr(std::move(typeStr), nItems);
     }
 
     if (level != "") {
