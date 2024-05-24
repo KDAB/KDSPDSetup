@@ -33,7 +33,7 @@ jobs:
           sudo apt install -y doxygen graphviz
 
       - name: Install ninja-build tool
-        uses: turtlesec-no/get-ninja@main
+        uses: aseprite/get-ninja@main
 
       - name: Checkout sources
         uses: actions/checkout@v4
