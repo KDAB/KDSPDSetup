@@ -84,6 +84,13 @@ void setupSink(toml::table &&sinkTable)
 #else
         return;
 #endif
+    } else if (details::inTypelist(typeStr, details::systemdStrs)) {
+#ifdef _KDSPDSETUP_SYSTEMD_
+        
+        sinkPtr = details::genFromSystemdStr(std::move(typeStr), std::move(sinkTable));
+#else
+        return;
+#endif
     }
 
     if (level != "") {

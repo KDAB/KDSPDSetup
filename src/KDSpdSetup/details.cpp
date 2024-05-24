@@ -119,6 +119,16 @@ auto createSyslogSinkTuple(toml::table const &sinkTable)
 }
 #endif
 
+#ifdef _KDSPDSETUP_SYSTEMD_
+auto createSystemdSinkTuple(toml::table &&sinkTable) -> std::tuple<std::string const, bool const>
+{
+    auto ident = (sinkTable.contains("ident")) ? sinkTable.at("ident").as_string() : "";
+    auto const enableFormatting = (sinkTable.contains("enable_formatting")) ? sinkTable.at("enable_formatting").as_boolean() : false;
+
+    return std::make_tuple(std::move(ident), enableFormatting);
+}
+#endif
+
 auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate) -> spdlog::sink_ptr
 {
     if (typeStr == "basic_file_sink_st") {
@@ -210,6 +220,20 @@ auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr
     }
     if (typeStr == "msvc_sink_mt") {
         return createMsvcSinkMtPtr();
+    }
+
+    return nullptr;
+}
+#endif
+
+#ifdef _KDSPDSETUP_SYSTEMD_
+auto genFromSystemdStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog::sink_ptr
+{
+    if (typeStr == "systemd_sink_st") {
+        return createSystemdSinkStPtr(std::move(sinkTable));
+    }
+    if (typeStr == "systemd_sink_mt") {
+        return createSystemdSinkMtPtr(std::move(sinkTable));
     }
 
     return nullptr;
