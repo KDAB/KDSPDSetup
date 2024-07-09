@@ -16,7 +16,7 @@ Contact KDAB at <info@kdab.com> for commercial licensing options.
 
 KDSPDSetup is a minimal reimplementation of the unmaintained [spdlog_setup](https://github.com/guangie88/spdlog_setup) library for modern C++ projects.
 
-Complete documentation is available [here](https://docs.kdab.com/kdspdsetup/unstable/).
+Complete documentation is available [here](https://kdab.github.io/KDSPDSetup).
 
 Given a TOML file containing configuration parameters, `spdlog` loggers for your project can be set up with a single call to `KDSPDSetup::setupFrom`, as shown below:
 
@@ -167,7 +167,7 @@ $ cmake --build <build-dir>
 
 ### Documentation
 
-The documentation for this project [is available online](https://docs.kdab.com/kdspdsetup/unstable/).
+The documentation for this project [is available online](https://kdab.github.io/KDSPDSetup).
 
 To build the documentation locally, pass the flag `-DKDSPDSETUP_BUILD_DOCS=ON` to CMake.
 
