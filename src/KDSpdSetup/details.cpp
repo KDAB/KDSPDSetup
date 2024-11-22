@@ -216,4 +216,16 @@ auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr
 }
 #endif
 
+auto genFromRingBufferStr(toml::string &&typeStr, std::size_t const nItems) -> spdlog::sink_ptr
+{
+    if (typeStr == "ringbuffer_sink_st") {
+        return createRingBufferSinkStPtr(nItems);
+    }
+    if (typeStr == "ringbuffer_sink_mt") {
+        return createRingBufferSinkMtPtr(nItems);
+    }
+
+    return nullptr;
+}
+
 } // namespace KDSPDSetup::details
