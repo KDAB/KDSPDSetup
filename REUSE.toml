@@ -1,0 +1,24 @@
+version = 1
+SPDX-PackageName = "KDSpdSetup"
+SPDX-PackageSupplier = "<info@kdab.com>"
+
+# config files
+[[annotations]]
+path = [".clang-format", ".gitignore", ".gitreview", ".pre-commit-config.yaml", ".cmake-format.py", ".krazy", ".mdlrc", ".mdlrc.rb", "CMakePresets.json", "REUSE.toml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>"
+SPDX-License-Identifier = "MIT"
+
+# toml examples from spdlog_setup
+[[annotations]]
+path = ["examples/example.toml", "tests/full/full-linux.toml", "tests/full/full-win32.toml", "tests/pre/pre.toml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2017 guangie88"
+SPDX-License-Identifier = "MIT"
+
+# doxygen awesome
+[[annotations]]
+path = "docs/doxygen-awesome.css"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2021 - 2023 jothepro"
+SPDX-License-Identifier = "MIT"
