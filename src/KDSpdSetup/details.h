@@ -27,6 +27,8 @@
 #include <spdlog/sinks/syslog_sink.h>
 #elif _WIN32
 #include <spdlog/sinks/msvc_sink.h>
+#elif __ANDROID__
+#include <spdlog/sinks/android_sink.h>
 #endif
 
 #include <toml.hpp>
@@ -92,6 +94,8 @@ static auto const linuxStrs{ std::vector<std::string>{ "syslog_sink_st", "syslog
  *
  */
 static auto const winStrs{ std::vector<std::string>{ "msvc_sink_st", "msvc_sink_mt" } };
+
+static auto const androidStrs{ std::vector<std::string>{ "android_sink_st", "android_sink_mt" } };
 
 /**
  * @brief A simple map associating strings of `spdlog::level::level_enum` names to the enums themselves.
@@ -310,6 +314,11 @@ private:
  *
  */
 #define createMsvcSinkMtPtr createMsvcSinkPtr<std::mutex>
+
+#elif __ANDROID__
+#define createAndroidSinkStPtr createAndroidSinkPtr<spdlog::details::null_mutex>
+
+#define createAndroidSinkMtPtr createAndroidSinkPtr<std::mutex>
 #endif
 
 /**
@@ -572,6 +581,13 @@ auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>
 {
     return std::make_shared<spdlog::sinks::msvc_sink<Mutex>>();
 }
+
+#elif __ANDROID__
+template<typename Mutex>
+auto createAndroidSinkPtr(std::string const &&tag, bool const useRawMessage) -> std::shared_ptr<spdlog::sinks::android_sink<Mutex>>
+{
+    return std::make_shared<spdlog::sinks::android_sink<Mutex>>(tag, useRawMessage);
+}
 #endif
 
 /**
@@ -649,6 +665,8 @@ auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog:
  */
 auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr;
 
+#elif __ANDROID__
+auto genFromAndroidStr(toml::string &&typeStr, toml::string &&tag, bool const useRawMsg) -> spdlog::sink_ptr;
 #endif
 
 } // namespace KDSPDSetup::details
