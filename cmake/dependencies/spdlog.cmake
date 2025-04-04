@@ -19,10 +19,14 @@ if(NOT TARGET spdlog::spdlog)
     )
     set_property(GLOBAL PROPERTY PACKAGES_NOT_FOUND ${tmp})
 
+    # Fix for uninitialized variable
+    set(PKG_CONFIG_REQUIRES "" CACHE STRING "Pkg-config requires field")
+
     fetchcontent_declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.11.0
+        EXCLUDE_FROM_ALL
     )
     fetchcontent_makeavailable(spdlog)
 
