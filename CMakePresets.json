@@ -17,6 +17,22 @@
             }
         },
         {
+            "name":"ci-base",
+            "generator":"Ninja",
+            "inherits": "dev-base",
+            "hidden":true,
+            "cacheVariables":{
+                "CMAKE_EXPORT_COMPILE_COMMANDS":"ON",
+                "CMAKE_COMPILE_WARNING_AS_ERROR":"ON"
+            },
+            "warnings":{
+                "uninitialized":true
+            },
+            "errors":{
+                "dev":false
+            }
+        },
+        {
             "name": "release-base",
             "hidden": true,
             "inherits": "base",
@@ -89,6 +105,39 @@
                 "release-base",
                 "msvc-base"
             ]
+        },
+        {
+            "name":"ci",
+            "inherits":"ci-base"
+        },
+        {
+            "name":"clazy",
+            "inherits":"ci-base"
+        },
+        {
+            "name":"clang-tidy",
+            "inherits":"ci-base",
+            "cacheVariables":{
+                "CMAKE_CXX_CLANG_TIDY":"clang-tidy"
+            }
+        }
+    ],
+    "buildPresets":[
+        {
+            "name":"ci",
+            "configurePreset":"ci"
+        },
+        {
+            "name":"clazy",
+            "configurePreset":"clazy",
+            "environment":{
+                "CLAZY_CHECKS":"level2,no-qstring-allocations,no-fully-qualified-moc-types,no-copyable-polymorphic",
+                "CCACHE_DISABLE":"ON"
+            }
+        },
+        {
+            "name":"clang-tidy",
+            "configurePreset":"clang-tidy"
         }
     ]
 }
