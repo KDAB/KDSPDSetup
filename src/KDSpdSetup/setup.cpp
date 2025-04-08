@@ -48,7 +48,7 @@ void setupSink(toml::table &&sinkTable)
     auto typeStr = sinkTable.at("type").as_string();
 
     bool ok = false;
-    for (auto &typeList : { details::fileStrs, details::rotateStrs, details::dailyStrs, details::nullStrs, details::stdStrs, details::linuxStrs, details::winStrs }) {
+    for (const auto &typeList : { details::fileStrs, details::rotateStrs, details::dailyStrs, details::nullStrs, details::stdStrs, details::linuxStrs, details::winStrs }) {
         if (details::inTypelist(typeStr, typeList)) {
             ok = true;
             break;

@@ -25,13 +25,7 @@ jobs:
               - cppcheck
 
     steps:
-      - name: Install Qt ${{ matrix.config.qt_version }} with options and default aqtversion
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ matrix.config.qt_version }}
-          cache: true
-
-      - name: Install ninja-build tool (must be after Qt due PATH changes)
+      - name: Install ninja-build tool
         uses: turtlesec-no/get-ninja@main
 
       - name: Install dependencies on Ubuntu (${{ join(matrix.config.apt_pgks, ' ') }})
@@ -41,12 +35,6 @@ jobs:
           echo ${{ join(matrix.config.apt_pgks, ' ') }} | xargs sudo apt install -y
 
       - uses: actions/checkout@v4
-        #with:
-          #ref: '2.0' # schedule.cron do not allow branch setting
-
-      - name: Make sure MSVC is found when Ninja generator is in use
-        if: ${{ runner.os == 'Windows' }}
-        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure project
         run: cmake --preset=${{ matrix.config.preset }}
@@ -54,12 +42,6 @@ jobs:
       - name: Build Project
         id: ctest
         run: cmake --build --preset=${{ matrix.config.preset }}
-
-      - name: Read tests log when it fails
-        uses: andstor/file-reader-action@v1
-        if: ${{ steps.ctest.conclusion == 'failure' }}
-        with:
-          path: "./build/Testing/Temporary/LastTest.log"
 
       - name: Run cppcheck
         if: ${{ matrix.config.preset == 'clang-tidy' }}
