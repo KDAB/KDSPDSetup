@@ -23,6 +23,8 @@ if(NOT TARGET doctest)
         doctest
         GIT_REPOSITORY https://github.com/doctest/doctest.git
         GIT_TAG master
+        EXCLUDE_FROM_ALL
+        SYSTEM
     )
     fetchcontent_makeavailable(doctest)
 
