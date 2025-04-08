@@ -27,6 +27,7 @@ if(NOT TARGET spdlog::spdlog)
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.11.0
         EXCLUDE_FROM_ALL
+        SYSTEM
     )
     fetchcontent_makeavailable(spdlog)
 

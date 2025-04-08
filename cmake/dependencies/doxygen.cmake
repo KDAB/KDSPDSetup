@@ -23,6 +23,8 @@ if(NOT DOXYGEN_FOUND)
         Doxygen
         GIT_REPOSITORY https://github.com/doxygen/doxygen.git
         GIT_TAG Release_1_9_5
+        EXCLUDE_FROM_ALL
+        SYSTEM
     )
     fetchcontent_makeavailable(Doxygen)
 

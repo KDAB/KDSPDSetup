@@ -23,6 +23,8 @@ if(NOT TARGET toml11)
         toml11
         GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
         GIT_TAG master
+        EXCLUDE_FROM_ALL
+        SYSTEM
     )
     fetchcontent_makeavailable(toml11)
 

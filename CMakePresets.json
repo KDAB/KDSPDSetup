@@ -111,14 +111,12 @@
             "inherits":"ci-base"
         },
         {
-            "name":"clazy",
-            "inherits":"ci-base"
-        },
-        {
             "name":"clang-tidy",
             "inherits":"ci-base",
             "cacheVariables":{
-                "CMAKE_CXX_CLANG_TIDY":"clang-tidy"
+                "CMAKE_CXX_CLANG_TIDY":"clang-tidy;--config-file=${sourceDir}/.clang-tidy",
+                "CMAKE_COMPILE_WARNING_AS_ERROR":"OFF",
+                "KDSPDSETUP_BUILD_DOCS":"OFF"
             }
         }
     ],
@@ -126,14 +124,6 @@
         {
             "name":"ci",
             "configurePreset":"ci"
-        },
-        {
-            "name":"clazy",
-            "configurePreset":"clazy",
-            "environment":{
-                "CLAZY_CHECKS":"level2,no-qstring-allocations,no-fully-qualified-moc-types,no-copyable-polymorphic",
-                "CCACHE_DISABLE":"ON"
-            }
         },
         {
             "name":"clang-tidy",
