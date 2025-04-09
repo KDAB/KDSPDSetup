@@ -59,8 +59,14 @@ void setupSink(toml::table &&sinkTable)
         throw std::out_of_range("KDSPDSetup: sink type "s + typeStr.str + " is not valid"s);
 
     toml::string level = "";
+    toml::string pattern = "";
+
     if (sinkTable.contains("level")) {
         level = sinkTable.at("level").as_string();
+    }
+
+    if (sinkTable.contains("pattern")) {
+        pattern = sinkTable.at("pattern").as_string();
     }
 
     if (details::inTypelist(typeStr, details::fileStrs) || details::inTypelist(typeStr, details::rotateStrs) ||
@@ -91,6 +97,14 @@ void setupSink(toml::table &&sinkTable)
             throw std::out_of_range("KDSPDSetup: level "s + level.str + " not found"s);
 
         sinkPtr->set_level(details::levelMap.at(level));
+    }
+
+    if (pattern != "") {
+        if (details::SPDMaps::patternMap().contains(pattern)) {
+            sinkPtr->set_pattern(details::SPDMaps::patternMap().at(pattern));
+        } else {
+            sinkPtr->set_pattern(pattern);
+        }
     }
 
     details::SPDMaps::emplaceSinkMap(std::make_pair(name, sinkPtr));
