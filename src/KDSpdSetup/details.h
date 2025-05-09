@@ -28,6 +28,10 @@
 #elif _WIN32
 #include <spdlog/sinks/msvc_sink.h>
 #endif
+#if __has_include(<systemd/sd-journal.h>)
+#include <spdlog/sinks/systemd_sink.h>
+#define _KDSPDSETUP_SYSTEMD_
+#endif
 
 #include <toml.hpp>
 
@@ -92,6 +96,8 @@ static auto const linuxStrs{ std::vector<std::string>{ "syslog_sink_st", "syslog
  *
  */
 static auto const winStrs{ std::vector<std::string>{ "msvc_sink_st", "msvc_sink_mt" } };
+
+static auto const systemdStrs{ std::vector<std::string>{ "systemd_sink_st", "systemd_sink_mt" } };
 
 /**
  * @brief A simple map associating strings of `spdlog::level::level_enum` names to the enums themselves.
@@ -310,6 +316,12 @@ private:
  *
  */
 #define createMsvcSinkMtPtr createMsvcSinkPtr<std::mutex>
+#endif
+
+#ifdef _KDSPDSETUP_SYSTEMD_
+#define createSystemdSinkStPtr createSystemdSinkPtr<spdlog::details::null_mutex>
+
+#define createSystemdSinkMtPtr createSystemdSinkPtr<std::mutex>
 #endif
 
 /**
@@ -574,6 +586,17 @@ auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>
 }
 #endif
 
+#ifdef _KDSPDSETUP_SYSTEMD_
+auto createSystemdSinkTuple(toml::table &&sinkTable) -> std::tuple<std::string const, bool const>;
+
+template<typename Mutex>
+auto createSystemdSinkPtr(toml::table &&sinkTable) -> std::shared_ptr<spdlog::sinks::systemd_sink<Mutex>>
+{
+    auto tup = createSystemdSinkTuple(std::move(sinkTable));
+    return std::make_shared<spdlog::sinks::systemd_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup));
+}
+#endif
+
 /**
  * @brief Return the result of calling KDSPDSetup::details::createFileSinkPtr with the correct template argument
  * based on the value of `typeStr`. Uses macros `createFileSinkStPtr` and `createFileSinkMtPtr` for clarity.
@@ -648,6 +671,11 @@ auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog:
  * @return spdlog::sink_ptr The result of calling KDSPDSetup::details::createMsvcSinkPtr.
  */
 auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr;
+
+#endif
+
+#ifdef _KDSPDSETUP_SYSTEMD_
+auto genFromSystemdStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog::sink_ptr;
 
 #endif
 
