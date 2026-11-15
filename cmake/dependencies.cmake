@@ -21,7 +21,7 @@ if(KDSPDSETUP_BUILD_DOCS)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/doxygen.cmake)
 endif()
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/toml11.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/reflectcpp.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/spdlog.cmake)
 
 if(KDSPDSETUP_BUILD_TESTS)

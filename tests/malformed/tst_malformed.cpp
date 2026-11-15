@@ -8,965 +8,247 @@
   Contact KDAB at <info@kdab.com> for commercial licensing options.
 */
 #include "../conf.h"
+#include <KDSpdSetup/configuration.h>
 #include <KDSpdSetup/details.h>
 #include <KDSpdSetup/setup.h>
 #include <doctest/doctest.h>
 
-using namespace toml::literals::toml_literals;
+#include <memory>
 
-TEST_SUITE("Testing all functions with invalid args.")
+using namespace KDSPDSetup;
+using namespace std::literals::string_literals;
+
+namespace {
+
+/// @brief Parse a TOML document that is expected to be rejected.
+void loadToml(std::string_view content)
 {
-    auto possible{ std::vector<std::string>{ "" } };
+    configuration::loadFromString(content, configuration::Format::toml);
+}
 
-    void checkInvalidNameNoSetup(toml::table && table)
+/// @brief Register a sink under `name`, so loggers can refer to it.
+void registerStdoutSink(std::string name)
+{
+    details::SPDMaps::emplaceSinkMap(std::make_pair(std::move(name), std::make_shared<spdlog::sinks::stdout_sink_st>()));
+}
+
+} // namespace
+
+TEST_SUITE("Configuration documents")
+{
+    TEST_CASE("The format is derived from the file name extension.")
     {
-        CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-        auto i{ 0 };
-        spdlog::details::registry::instance().apply_all([&i](auto log) {
-            ++i;
-            CHECK(log->name() == "");
-        });
-        CHECK(i == 1);
+        CHECK(configuration::formatFromExtension("config.toml") == configuration::Format::toml);
+        CHECK(configuration::formatFromExtension("config.json") == configuration::Format::json);
+        CHECK(configuration::formatFromExtension("config.yaml") == configuration::Format::yaml);
+        CHECK(configuration::formatFromExtension("config.yml") == configuration::Format::yaml);
+        CHECK(configuration::formatFromExtension("config.TOML") == configuration::Format::toml);
+        CHECK(configuration::formatFromExtension("path/to/config.json") == configuration::Format::json);
+
+        CHECK(!configuration::formatFromExtension("config").has_value());
+        CHECK(!configuration::formatFromExtension("config.ini").has_value());
     }
 
-    auto checkLogNames(std::string const logName, toml::table &&table, bool const shouldSetup)->std::shared_ptr<spdlog::logger>
+    TEST_CASE("Unknown extensions are rejected.")
     {
-        if (shouldSetup)
-            CHECK_NOTHROW(KDSPDSetup::setup::setupLogger(table));
-        else
-            CHECK_THROWS(KDSPDSetup::setup::setupLogger(table));
-
-        auto logger = spdlog::get(logName);
-
-        if (shouldSetup)
-            CHECK(logger != nullptr);
-        else
-            CHECK(logger == nullptr);
-
-        if (shouldSetup)
-            possible.push_back(logName);
-
-        auto i{ 0 };
-        spdlog::details::registry::instance().apply_all([&i](auto log) {
-            ++i;
-            CHECK(std::find(possible.cbegin(), possible.cend(), log->name()) != possible.cend());
-        });
-        CHECK(i == possible.size());
-
-        return logger;
+        CHECK_THROWS_AS(setupFrom("config.ini"), std::invalid_argument);
     }
 
-    TEST_CASE("setupLogger")
+    TEST_CASE("Missing files are rejected.")
     {
-        CHECK(spdlog::get("") != nullptr); // weirdly this always exists?
+        CHECK_THROWS(setupFrom("this-file-does-not-exist.toml"));
+    }
 
-        SUBCASE("name")
+    TEST_CASE("Documents with broken syntax are rejected.")
+    {
+        SUBCASE("TOML")
         {
-            auto const value = u8R"(
-                global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                [[sink]]
-                name = "null_sink_st"
-                type = "null_sink_st"
-            )"_toml;
-
-            KDSPDSetup::setup::setupSinks(value);
-            KDSPDSetup::setup::setupPatterns(value);
-            KDSPDSetup::setup::setupThreadPools(value);
-
-            SUBCASE("name integer")
-            {
-                auto table = u8R"(
-                    name = 12
-                    sinks = ["null_sink_st"]
-                )"_toml.as_table();
-
-                checkInvalidNameNoSetup(std::move(table));
-            }
-
-            SUBCASE("name empty array")
-            {
-                auto table = u8R"(
-                    name = []
-                    sinks = ["null_sink_st"]
-                )"_toml.as_table();
-
-                checkInvalidNameNoSetup(std::move(table));
-            }
-
-            SUBCASE("name string array")
-            {
-                auto table = u8R"(
-                    name = ["one", "two"]
-                    sinks = ["null_sink_st"]
-                )"_toml.as_table();
-
-                checkInvalidNameNoSetup(std::move(table));
-            }
-
-            SUBCASE("name integer array")
-            {
-                auto table = u8R"(
-                    name = [1, 2, 3]
-                    sinks = ["null_sink_st"]
-                )"_toml.as_table();
-
-                checkInvalidNameNoSetup(std::move(table));
-            }
-
-            SUBCASE("name mixed array")
-            {
-                auto table = u8R"(
-                    name = ["one", 2]
-                    sinks = ["null_sink_st"]
-                )"_toml.as_table();
-
-                checkInvalidNameNoSetup(std::move(table));
-            }
+            CHECK_THROWS(loadToml("[[sink]"));
         }
 
-        SUBCASE("sinks")
+        SUBCASE("JSON")
         {
-            auto const value = u8R"(
-                global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                [[sink]]
-                name = "sinks_null_sink_st"
-                type = "null_sink_st"
-            )"_toml;
-
-            KDSPDSetup::setup::setupSinks(value);
-            KDSPDSetup::setup::setupPatterns(value);
-            KDSPDSetup::setup::setupThreadPools(value);
-
-            CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("sinks_null_sink_st"));
-
-            SUBCASE("non-existent sinks")
-            {
-                auto table = u8R"(
-                    name = "non_existent_sinks"
-                    sinks = ["console_st", "daily_out"]
-                )"_toml.as_table();
-
-                auto logger{ checkLogNames("non_existent_sinks", std::move(table), true) };
-
-                CHECK(logger->sinks().size() == 0);
-                CHECK(logger->level() == spdlog::level::info);
-                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-            }
-
-            SUBCASE("some non-existent sinks")
-            {
-                auto table = u8R"(
-                    name = "some_non_existent_sinks"
-                    sinks = ["console_st", "sinks_null_sink_st"]
-                )"_toml.as_table();
-
-                auto logger{ checkLogNames("some_non_existent_sinks", std::move(table), true) };
-
-                CHECK(logger->sinks().size() == 1);
-                CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("sinks_null_sink_st"));
-                CHECK(logger->level() == spdlog::level::info);
-                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-            }
-
-            SUBCASE("sinks integer")
-            {
-                auto table = u8R"(
-                    name = "sinks_integer"
-                    sinks = 12
-                )"_toml.as_table();
-
-                checkLogNames("sinks_integer", std::move(table), false);
-            }
-
-            SUBCASE("sinks string")
-            {
-                auto table = u8R"(
-                    name = "sinks_string"
-                    sinks = "sinks_null_sink_st"
-                )"_toml.as_table();
-
-                checkLogNames("sinks_string", std::move(table), false);
-            }
-
-            SUBCASE("sinks empty array")
-            {
-                auto table = u8R"(
-                    name = "sinks_empty_array"
-                    sinks = []
-                )"_toml.as_table();
-
-                auto logger{ checkLogNames("sinks_empty_array", std::move(table), true) };
-
-                CHECK(logger->sinks().size() == 0);
-                CHECK(logger->level() == spdlog::level::info);
-                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-            }
-
-            SUBCASE("sinks integer array")
-            {
-                auto table = u8R"(
-                    name = "sinks_integer_array"
-                    sinks = [1, 2, 3]
-                )"_toml.as_table();
-
-                checkLogNames("sinks_integer_array", std::move(table), false);
-            }
-
-            SUBCASE("sinks mixed array")
-            {
-                auto table = u8R"(
-                    name = "sinks_mixed_array"
-                    sinks = [1, "sinks_null_sink_st"]
-                )"_toml.as_table();
-
-                checkLogNames("sinks_mixed_array", std::move(table), false);
-            }
+            CHECK_THROWS(configuration::loadFromString("{ \"sink\": ", configuration::Format::json));
         }
 
-        SUBCASE("level")
+        SUBCASE("YAML")
         {
-            auto const value = u8R"(
-                global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                [[sink]]
-                name = "level_null_sink_mt"
-                type = "null_sink_mt"
-            )"_toml;
-
-            KDSPDSetup::setup::setupSinks(value);
-            KDSPDSetup::setup::setupPatterns(value);
-            KDSPDSetup::setup::setupThreadPools(value);
-
-            SUBCASE("non-existent level")
-            {
-                auto table = u8R"(
-                    name = "non_existent_level"
-                    sinks = ["level_null_sink_mt"]
-                    level = "dsfsdkjfh"
-                )"_toml.as_table();
-
-                checkLogNames("non_existent_level", std::move(table), false);
-            }
-
-            SUBCASE("level integer")
-            {
-                auto table = u8R"(
-                    name = "level_integer"
-                    sinks = ["level_null_sink_mt"]
-                    level = 12
-                )"_toml.as_table();
-
-                checkLogNames("level_integer", std::move(table), false);
-            }
-
-            SUBCASE("level empty array")
-            {
-                auto table = u8R"(
-                    name = "level_empty_array"
-                    sinks = ["level_null_sink_mt"]
-                    level = []
-                )"_toml.as_table();
-
-                checkLogNames("level_empty_array", std::move(table), false);
-            }
-
-            SUBCASE("level integer array")
-            {
-                auto table = u8R"(
-                    name = "level_integer_array"
-                    sinks = ["level_null_sink_mt"]
-                    level = [1, 2, 3]
-                )"_toml.as_table();
-
-                checkLogNames("level_integer_array", std::move(table), false);
-            }
-
-            SUBCASE("level string array")
-            {
-                auto table = u8R"(
-                    name = "level_string_array"
-                    sinks = ["level_null_sink_mt"]
-                    level = ["info"]
-                )"_toml.as_table();
-
-                checkLogNames("level_string_array", std::move(table), false);
-            }
-
-            SUBCASE("level mixed array")
-            {
-                auto table = u8R"(
-                    name = "level_mixed_array"
-                    sinks = ["level_null_sink_mt"]
-                    level = ["info", 1]
-                )"_toml.as_table();
-
-                checkLogNames("level_mixed_array", std::move(table), false);
-            }
-        }
-
-        SUBCASE("pattern")
-        {
-            SUBCASE("global pattern")
-            {
-                auto value = u8R"(
-                    [[sink]]
-                    name = "global_pattern_null_sink_mt"
-                    type = "null_sink_mt"
-                )"_toml;
-
-                KDSPDSetup::setup::setupSinks(value);
-
-                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("global_pattern_null_sink_mt"));
-
-                SUBCASE("no pattern and no global pattern")
-                {
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupPatterns(value));
-
-                    auto table = u8R"(
-                        name = "no_pattern_and_no_global_pattern"
-                        sinks = ["global_pattern_null_sink_mt"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("no_pattern_and_no_global_pattern", std::move(table), true) };
-
-                    CHECK(logger->sinks().size() == 1);
-                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info);
-                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-                    // no way to really check pattern here
-                }
-
-                SUBCASE("global pattern invalid")
-                {
-                    auto const pat = u8R"(global_pattern = "[%12jh3gz] [%456L]] <<%n>: %%v")"_toml;
-
-                    CHECK_NOTHROW(KDSPDSetup::setup::setupPatterns(pat));
-
-                    auto table = u8R"(
-                        name = "global_pattern_invalid"
-                        sinks = ["global_pattern_null_sink_mt"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("global_pattern_invalid", std::move(table), true) };
-
-                    CHECK(logger->sinks().size() == 1);
-                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info);
-                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-                    // no way to really check pattern here
-                }
-
-                SUBCASE("global pattern integer")
-                {
-                    auto const pat = u8R"(global_pattern = 12)"_toml;
-
-                    CHECK_THROWS(KDSPDSetup::setup::setupPatterns(pat)); // this call throws, but the logger can still be created
-
-                    auto table = u8R"(
-                        name = "global_pattern_integer"
-                        sinks = ["global_pattern_null_sink_mt"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("global_pattern_integer", std::move(table), true) };
-
-                    CHECK(logger->sinks().size() == 1);
-                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info);
-                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-                }
-
-                SUBCASE("global pattern empty array")
-                {
-                    auto const pat = u8R"(global_pattern = [])"_toml;
-
-                    CHECK_THROWS(KDSPDSetup::setup::setupPatterns(pat)); // this call throws, but the logger can still be created
-
-                    auto table = u8R"(
-                        name = "global_pattern_empty_array"
-                        sinks = ["global_pattern_null_sink_mt"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("global_pattern_empty_array", std::move(table), true) };
-
-                    CHECK(logger->sinks().size() == 1);
-                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info);
-                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-                }
-
-                SUBCASE("global pattern integer array")
-                {
-                    auto const pat = u8R"(global_pattern = [1, 2, 3])"_toml;
-
-                    CHECK_THROWS(KDSPDSetup::setup::setupPatterns(pat)); // this call throws, but the logger can still be created
-
-                    auto table = u8R"(
-                        name = "global_pattern_integer_array"
-                        sinks = ["global_pattern_null_sink_mt"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("global_pattern_integer_array", std::move(table), true) };
-
-                    CHECK(logger->sinks().size() == 1);
-                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info);
-                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-                }
-
-                SUBCASE("global pattern string array")
-                {
-                    auto const pat = u8R"(global_pattern = ["[%Y-%m-%dT%T%z] [%L] <%n>: %v"])"_toml;
-
-                    CHECK_THROWS(KDSPDSetup::setup::setupPatterns(pat)); // this call throws, but the logger can still be created
-
-                    auto table = u8R"(
-                        name = "global_pattern_string_array"
-                        sinks = ["global_pattern_null_sink_mt"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("global_pattern_string_array", std::move(table), true) };
-
-                    CHECK(logger->sinks().size() == 1);
-                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info);
-                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-                }
-
-                SUBCASE("global pattern mixed array")
-                {
-                    auto const pat = u8R"(global_pattern = ["[%Y-%m-%dT%T%z] [%L] <%n>: %v", 1])"_toml;
-
-                    CHECK_THROWS(KDSPDSetup::setup::setupPatterns(pat)); // this call throws, but the logger can still be created
-
-                    auto table = u8R"(
-                        name = "global_pattern_mixed_array"
-                        sinks = ["global_pattern_null_sink_mt"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("global_pattern_mixed_array", std::move(table), true) };
-
-                    CHECK(logger->sinks().size() == 1);
-                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("global_pattern_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info);
-                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-                }
-            }
-
-            SUBCASE("non-global pattern")
-            {
-                auto value = u8R"(
-                    global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
-
-                    [[sink]]
-                    name = "non_global_pattern_null_sink_mt"
-                    type = "null_sink_mt"
-
-                    [[pattern]]
-                    name = "succient"
-                    value = "%c-%L: %v"
-                )"_toml;
-
-                KDSPDSetup::setup::setupSinks(value);
-                KDSPDSetup::setup::setupPatterns(value);
-
-                CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("non_global_pattern_null_sink_mt"));
-
-                SUBCASE("non-existent pattern")
-                {
-                    auto table = u8R"(
-                        name = "non_existent_pattern"
-                        sinks = ["non_global_pattern_null_sink_mt"]
-                        pattern = "dshdksfjh"
-                    )"_toml.as_table();
-
-                    checkLogNames("non_existent_pattern", std::move(table), false);
-                }
-
-                SUBCASE("pattern integer")
-                {
-                    auto table = u8R"(
-                        name = "pattern_integer"
-                        sinks = ["non_global_pattern_null_sink_mt"]
-                        pattern = 12
-                    )"_toml.as_table();
-
-                    checkLogNames("pattern_integer", std::move(table), false);
-                }
-
-                SUBCASE("pattern empty array")
-                {
-                    auto table = u8R"(
-                        name = "pattern_empty_array"
-                        sinks = ["non_global_pattern_null_sink_mt"]
-                        pattern = []
-                    )"_toml.as_table();
-
-                    checkLogNames("pattern_empty_array", std::move(table), false);
-                }
-
-                SUBCASE("pattern integer array")
-                {
-                    auto table = u8R"(
-                        name = "pattern_integer_array"
-                        sinks = ["non_global_pattern_null_sink_mt"]
-                        pattern = [1, 2, 3]
-                    )"_toml.as_table();
-
-                    checkLogNames("pattern_integer_array", std::move(table), false);
-                }
-
-                SUBCASE("pattern string array")
-                {
-                    auto table = u8R"(
-                        name = "pattern_string_array"
-                        sinks = ["non_global_pattern_null_sink_mt"]
-                        pattern = ["succient"]
-                    )"_toml.as_table();
-
-                    checkLogNames("pattern_string_array", std::move(table), false);
-                }
-
-                SUBCASE("pattern mixed array")
-                {
-                    auto table = u8R"(
-                        name = "pattern_mixed_array"
-                        sinks = ["non_global_pattern_null_sink_mt"]
-                        pattern = ["succient", 1]
-                    )"_toml.as_table();
-
-                    checkLogNames("pattern_mixed_array", std::move(table), false);
-                }
-            }
-        }
-
-        SUBCASE("type and async")
-        {
-            auto value = u8R"(
-                [[thread_pool]]
-                name = "tp"
-                queue_size = 4096
-                num_threads = 2
-
-                [[sink]]
-                name = "async_null_sink_mt"
-                type = "null_sink_mt"
-            )"_toml;
-
-            KDSPDSetup::setup::setupSinks(value);
-            KDSPDSetup::setup::setupThreadPools(value);
-
-            CHECK(KDSPDSetup::details::SPDMaps::sinkMap().contains("async_null_sink_mt"));
-            CHECK(KDSPDSetup::details::SPDMaps::threadPoolMap().contains("tp"));
-
-            SUBCASE("type other than async")
-            {
-                CHECK_NOTHROW(KDSPDSetup::setup::setupThreadPools(value));
-
-                auto table = u8R"(
-                    type = "dkjlfhsdk"
-                    name = "type_other_than_async"
-                    sinks = ["async_null_sink_mt"]
-                )"_toml.as_table();
-
-                auto logger{ checkLogNames("type_other_than_async", std::move(table), true) };
-
-                CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                CHECK(dynamic_cast<spdlog::logger *>(logger.get()) != nullptr);
-
-                CHECK(logger->sinks().size() == 1);
-                CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("async_null_sink_mt"));
-                CHECK(logger->level() == spdlog::level::info);
-                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-            }
-
-            SUBCASE("non-async with thread pool")
-            {
-                auto table = u8R"(
-                    name = "non_async_with_thread_pool"
-                    sinks = ["async_null_sink_mt"]
-                    thread_pool = "tp"
-                )"_toml.as_table();
-
-                auto logger{ checkLogNames("non_async_with_thread_pool", std::move(table), true) };
-
-                CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                CHECK(dynamic_cast<spdlog::logger *>(logger.get()) != nullptr);
-
-                CHECK(logger->sinks().size() == 1);
-                CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("async_null_sink_mt"));
-                CHECK(logger->level() == spdlog::level::info);
-                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-            }
-
-            SUBCASE("non-async with overflow policy")
-            {
-                auto table = u8R"(
-                    name = "non_async_with_overflow_policy"
-                    sinks = ["async_null_sink_mt"]
-                    overflow_policy = "overrun_oldest"
-                )"_toml.as_table();
-
-                auto logger{ checkLogNames("non_async_with_overflow_policy", std::move(table), true) };
-
-                CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                CHECK(dynamic_cast<spdlog::logger *>(logger.get()) != nullptr);
-
-                CHECK(logger->sinks().size() == 1);
-                CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("async_null_sink_mt"));
-                CHECK(logger->level() == spdlog::level::info);
-                CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-            }
-
-            SUBCASE("thread pool")
-            {
-                SUBCASE("no thread pool and no global thread pool")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "no_thread_pool_and_no_global_thread_pool"
-                        sinks = ["async_null_sink_mt"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("no_thread_pool_and_no_global_thread_pool", std::move(table), true) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) != nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) != nullptr);
-
-                    CHECK(logger->sinks().size() == 1);
-                    CHECK(logger->sinks()[0] == KDSPDSetup::details::SPDMaps::sinkMap().at("async_null_sink_mt"));
-                    CHECK(logger->level() == spdlog::level::info);
-                    CHECK_NOTHROW(logger->trace("dlsfjdfjksd"));
-                }
-
-                SUBCASE("invalid thread pool")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "invalid_thread_pool"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = "dfskjfhsdk"
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("thread pool integer")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "thread_pool_integer"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = 12
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("thread pool empty array")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "thread_pool_empty_array"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = []
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("thread pool integer array")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "thread_pool_integer_array"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = [1, 2, 3]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("thread pool string array")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "thread_pool_string_array"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = ["tp"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("thread pool mixed array")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "thread_pool_mixed_array"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = ["tp", 1]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-            }
-
-            SUBCASE("overflow policy")
-            {
-                SUBCASE("invalid overflow policy")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "invalid_overflow_policy"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = "tp"
-                        overflow_policy = "sdljkkj"
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("overflow policy integer")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "overflow_policy_integer"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = "tp"
-                        overflow_policy = 12
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("overflow policy empty array")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "overflow_policy_empty_array"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = "tp"
-                        overflow_policy = []
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("overflow policy integer array")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "overflow_policy_integer_array"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = "tp"
-                        overflow_policy = [1, 2, 3]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("overflow policy string array")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "overflow_policy_string_array"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = "tp"
-                        overflow_policy = ["overrun_oldest"]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-
-                SUBCASE("overflow policy mixed array")
-                {
-                    auto table = u8R"(
-                        type = "async"
-                        name = "overflow_policy_mixed_array"
-                        sinks = ["async_null_sink_mt"]
-                        thread_pool = "tp"
-                        overflow_policy = ["overrun_oldest", 1]
-                    )"_toml.as_table();
-
-                    auto logger{ checkLogNames("invalid_thread_pool", std::move(table), false) };
-
-                    CHECK(dynamic_cast<spdlog::async_logger *>(logger.get()) == nullptr);
-                    CHECK(dynamic_cast<spdlog::logger *>(logger.get()) == nullptr);
-                }
-            }
+            CHECK_THROWS(configuration::loadFromString("sink:\n  - name: [", configuration::Format::yaml));
         }
     }
 
-    // for now i think there are diminishing returns doing the below tests
-
-    TEST_CASE("setupLoggers")
+    TEST_CASE("Documents with wrongly typed values are rejected.")
     {
-    }
+        SUBCASE("A level must be a string")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[logger]]
+name = "invalid"
+level = 1
+)"));
+        }
 
-    TEST_CASE("setupSink")
-    {
-    }
+        SUBCASE("Sinks must be an array of strings")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[logger]]
+name = "invalid"
+sinks = "console"
+)"));
+        }
 
-    TEST_CASE("setupSinks")
-    {
-    }
+        SUBCASE("A sink must be a table")
+        {
+            CHECK_THROWS(loadToml("sink = [1, 2, 3]"));
+        }
 
-    TEST_CASE("handleTruncatable")
-    {
-    }
-
-    TEST_CASE("handleMultifiles")
-    {
-    }
-
-    TEST_CASE("setupPatterns")
-    {
-    }
-
-    TEST_CASE("setupThreadPools")
-    {
-    }
-
-    TEST_CASE("register_async")
-    {
-    }
-
-    TEST_CASE("registerSyncr")
-    {
-    }
-
-    TEST_CASE("createRotatingFileSinkStPtr")
-    {
+        SUBCASE("Rotation hours must be numbers")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[sink]]
+name = "daily"
+type = "daily_file_sink_st"
+base_filename = "log/daily.log"
+rotation_hour = "seventeen"
+)"));
+        }
     }
 
-    TEST_CASE("createRotatingFileSinkMtPtr")
+    TEST_CASE("Incomplete documents are rejected.")
     {
+        SUBCASE("A sink requires a name")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[sink]]
+type = "stdout_sink_mt"
+)"));
+        }
+
+        SUBCASE("A sink requires a type")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[sink]]
+name = "console"
+)"));
+        }
+
+        SUBCASE("A basic file sink requires a filename")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[sink]]
+name = "file"
+type = "basic_file_sink_st"
+)"));
+        }
+
+        SUBCASE("A rotating file sink requires a max size")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[sink]]
+name = "rotate"
+type = "rotating_file_sink_st"
+base_filename = "log/rotate.log"
+)"));
+        }
+
+        SUBCASE("A logger requires a name")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[logger]]
+sinks = ["console"]
+)"));
+        }
+
+        SUBCASE("A pattern requires a value")
+        {
+            CHECK_THROWS(loadToml(R"(
+[[pattern]]
+name = "succient"
+)"));
+        }
+    }
+}
+
+TEST_SUITE("Setup functions")
+{
+    TEST_CASE("Sinks with an unknown type are rejected.")
+    {
+        CHECK_THROWS_AS(setup::setupSink(SinkConfig{ .name = "unknown", .type = "no_such_sink" }), std::out_of_range);
     }
 
-    TEST_CASE("createFileSinkStPtr")
+    TEST_CASE("Sinks with an unknown level are rejected.")
     {
+        auto const sink = SinkConfig{ .name = "invalid_level", .type = "stdout_sink_mt", .level = "no_such_level" };
+
+        CHECK_THROWS_AS(setup::setupSink(sink), std::out_of_range);
     }
 
-    TEST_CASE("createFileSinkMtPtr")
+    TEST_CASE("Loggers with an unknown level are rejected.")
     {
+        registerStdoutSink("console_for_level");
+
+        auto const logger = LoggerConfig{ .name = "invalid_level", .sinks = { "console_for_level" }, .level = "no_such_level" };
+
+        CHECK_THROWS_AS(setup::setupLogger(logger), std::out_of_range);
     }
 
-    TEST_CASE("createDailyFileSinkStPtr")
+    TEST_CASE("Loggers referring to an unknown pattern are rejected.")
     {
+        registerStdoutSink("console_for_pattern");
+
+        auto const logger = LoggerConfig{ .name = "invalid_pattern", .sinks = { "console_for_pattern" }, .pattern = "no_such_pattern" };
+
+        CHECK_THROWS_AS(setup::setupLogger(logger), std::out_of_range);
     }
 
-    TEST_CASE("createDailyFileSinkMtPtr")
+    TEST_CASE("Loggers referring to an unknown thread pool are rejected.")
     {
+        registerStdoutSink("console_for_pool");
+
+        auto const logger = LoggerConfig{ .name = "invalid_pool",
+                                          .type = "async",
+                                          .sinks = { "console_for_pool" },
+                                          .thread_pool = "no_such_pool" };
+
+        CHECK_THROWS_AS(setup::setupLogger(logger), std::out_of_range);
     }
 
-    TEST_CASE("createStdoutSinkStPtr")
+    TEST_CASE("Loggers with an unknown overflow policy are rejected.")
     {
+        registerStdoutSink("console_for_overflow");
+
+        auto const logger = LoggerConfig{ .name = "invalid_overflow",
+                                          .type = "async",
+                                          .sinks = { "console_for_overflow" },
+                                          .overflow_policy = "no_such_policy" };
+
+        CHECK_THROWS_AS(setup::setupLogger(logger), std::out_of_range);
     }
 
-    TEST_CASE("createStdoutSinkMtPtr")
+    TEST_CASE("Loggers silently skip sinks that were never set up.")
     {
-    }
-#ifdef __linux__
-    TEST_CASE("createSyslogSinkStPtr")
-    {
+        auto const logger = LoggerConfig{ .name = "missing_sink", .sinks = { "never_registered" } };
+
+        CHECK_NOTHROW(setup::setupLogger(logger));
+
+        spdlog::drop("missing_sink");
     }
 
-    TEST_CASE("createSyslogSinkMtPtr")
+    TEST_CASE("Loggers are created from the configuration.")
     {
-    }
+        registerStdoutSink("console_for_creation");
 
-    TEST_CASE("createSyslogSinkTuple")
-    {
-    }
+        auto const logger = LoggerConfig{ .name = "created_logger", .sinks = { "console_for_creation" }, .level = "info" };
 
-    TEST_CASE("genFromLinuxStr")
-    {
-    }
-#elif _WIN32
-    TEST_CASE("createMsvcSinkStPtr")
-    {
-    }
+        CHECK(spdlog::get("created_logger") == nullptr);
 
-    TEST_CASE("createMsvcSinkMtPtr")
-    {
-    }
+        setup::setupLogger(logger);
 
-    TEST_CASE("genFromWinStr")
-    {
-    }
-#endif
-    TEST_CASE("createNullSinkPtr")
-    {
-    }
+        auto const created = spdlog::get("created_logger");
+        REQUIRE(created != nullptr);
+        CHECK(created->level() == spdlog::level::info);
+        CHECK(created->sinks().size() == 1);
 
-    TEST_CASE("createStdoutSinkPtr")
-    {
-    }
-
-    TEST_CASE("inTypelist")
-    {
-    }
-
-    TEST_CASE("createRotatingFileSinkTuple")
-    {
-    }
-
-    TEST_CASE("createFileSinkTuple")
-    {
-    }
-
-    TEST_CASE("createDailyFileSinkTuple")
-    {
-    }
-
-    TEST_CASE("genFromFileStr")
-    {
-    }
-
-    TEST_CASE("genFromRotateStr")
-    {
-    }
-
-    TEST_CASE("genFromDailyStr")
-    {
-    }
-
-    TEST_CASE("genFromNullOrStdStr")
-    {
+        spdlog::drop("created_logger");
     }
 }

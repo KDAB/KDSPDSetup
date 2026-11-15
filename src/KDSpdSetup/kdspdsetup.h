@@ -29,9 +29,10 @@
 #include <spdlog/sinks/msvc_sink.h>
 #endif
 
-#include <toml.hpp>
+#include <KDSpdSetup/configuration.h>
 
 #include <string>
+#include <string_view>
 
 /**
  * @brief The only public-facing namespace in the library.
@@ -42,9 +43,34 @@ namespace KDSPDSetup {
 /**
  * @brief This function performs all setup needed to start logging.
  * It should be the only callable part of the library.
- * 
- * @param file The toml configuration file to read from.
+ *
+ * The format of the configuration file is derived from its extension: `.toml`, `.json`,
+ * `.yaml` and `.yml` are supported. Everything else is rejected.
+ *
+ * @param file The configuration file to read from.
+ * @throws std::invalid_argument If the file extension is not recognized.
+ * @throws std::runtime_error If the file cannot be read, cannot be parsed, or is incomplete.
  */
 void setupFrom(std::string const &file);
+
+/**
+ * @brief This function performs all setup needed to start logging, using an explicitly
+ * given format instead of deriving it from the file name extension.
+ *
+ * @param file The configuration file to read from.
+ * @param format The format `file` is written in.
+ * @throws std::runtime_error If the file cannot be read, cannot be parsed, or is incomplete.
+ */
+void setupFrom(std::string const &file, configuration::Format format);
+
+/**
+ * @brief This function performs all setup needed to start logging from a configuration
+ * document that is already in memory.
+ *
+ * @param content The configuration document itself.
+ * @param format The format `content` is written in.
+ * @throws std::runtime_error If `content` cannot be parsed or is incomplete.
+ */
+void setupFromString(std::string_view content, configuration::Format format);
 
 } // namespace KDSPDSetup

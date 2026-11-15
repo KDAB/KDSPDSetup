@@ -16,6 +16,19 @@ precedence = "aggregate"
 SPDX-FileCopyrightText = "2017 guangie88"
 SPDX-License-Identifier = "MIT"
 
+# example configurations in the other supported formats
+[[annotations]]
+path = [
+    "examples/example.json",
+    "examples/example.yaml",
+    "tests/config/example.toml",
+    "tests/config/example.json",
+    "tests/config/example.yaml",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>"
+SPDX-License-Identifier = "MIT"
+
 # doxygen awesome
 [[annotations]]
 path = "docs/doxygen-awesome.css"

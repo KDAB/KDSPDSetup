@@ -15,148 +15,117 @@ using std::literals::string_literals::operator""s;
 
 namespace KDSPDSetup::setup {
 
-void handleMultipleFileSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr, bool const &truncate)
+void handleMultipleFileSink(SinkConfig const &sink, spdlog::sink_ptr &sinkPtr)
 {
-    auto baseFilename = sinkTable.at("base_filename").as_string();
-    auto maxFiles = (sinkTable.contains("max_files")) ? static_cast<uint16_t>(sinkTable.at("max_files").as_integer()) : uint16_t{ 0 };
-
-    if (details::inTypelist(typeStr, details::rotateStrs)) {
-        sinkPtr = details::genFromRotateStr(std::move(typeStr), std::move(sinkTable), std::move(baseFilename), maxFiles);
+    if (details::inTypelist(sink.type, details::rotateStrs)) {
+        sinkPtr = details::genFromRotateStr(sink);
     }
 
-    else if (details::inTypelist(typeStr, details::dailyStrs)) {
-        sinkPtr = details::genFromDailyStr(std::move(typeStr), std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
+    else if (details::inTypelist(sink.type, details::dailyStrs)) {
+        sinkPtr = details::genFromDailyStr(sink);
     }
 }
 
-void handleTruncatableSink(toml::string &&typeStr, toml::table &&sinkTable, spdlog::sink_ptr &sinkPtr)
+void handleTruncatableSink(SinkConfig const &sink, spdlog::sink_ptr &sinkPtr)
 {
-    auto const truncate = (sinkTable.contains("truncate")) ? sinkTable.at("truncate").as_boolean() : false;
-
-    if (details::inTypelist(typeStr, details::fileStrs)) {
-        sinkPtr = details::genFromFileStr(std::move(typeStr), std::move(sinkTable), truncate);
-    } else if (details::inTypelist(typeStr, details::rotateStrs) || details::inTypelist(typeStr, details::dailyStrs)) {
-        handleMultipleFileSink(std::move(typeStr), std::move(sinkTable), sinkPtr, truncate);
+    if (details::inTypelist(sink.type, details::fileStrs)) {
+        sinkPtr = details::genFromFileStr(sink);
+    } else if (details::inTypelist(sink.type, details::rotateStrs) || details::inTypelist(sink.type, details::dailyStrs)) {
+        handleMultipleFileSink(sink, sinkPtr);
     }
 }
 
-void setupSink(toml::table &&sinkTable)
+void setupSink(SinkConfig const &sink)
 {
     spdlog::sink_ptr sinkPtr;
 
-    auto const name = sinkTable.at("name").as_string();
-    auto typeStr = sinkTable.at("type").as_string();
+    auto const &name = sink.name;
+    auto const &type = sink.type;
 
     bool ok = false;
     for (const auto &typeList : { details::fileStrs, details::rotateStrs, details::dailyStrs, details::nullStrs, details::stdStrs, details::linuxStrs, details::winStrs }) {
-        if (details::inTypelist(typeStr, typeList)) {
+        if (details::inTypelist(type, typeList)) {
             ok = true;
             break;
         }
     }
 
     if (!ok)
-        throw std::out_of_range("KDSPDSetup: sink type "s + typeStr.str + " is not valid"s);
+        throw std::out_of_range("KDSPDSetup: sink type "s + type + " is not valid"s);
 
-    toml::string level = "";
-    if (sinkTable.contains("level")) {
-        level = sinkTable.at("level").as_string();
+    if (details::inTypelist(type, details::fileStrs) || details::inTypelist(type, details::rotateStrs) ||
+        details::inTypelist(type, details::dailyStrs)) {
+        handleTruncatableSink(sink, sinkPtr);
     }
 
-    if (details::inTypelist(typeStr, details::fileStrs) || details::inTypelist(typeStr, details::rotateStrs) ||
-        details::inTypelist(typeStr, details::dailyStrs)) {
-        handleTruncatableSink(std::move(typeStr), std::move(sinkTable), sinkPtr);
+    else if (details::inTypelist(type, details::nullStrs) || details::inTypelist(type, details::stdStrs)) {
+        sinkPtr = details::genFromNullOrStdStr(sink);
     }
 
-    else if (details::inTypelist(typeStr, details::nullStrs) || details::inTypelist(typeStr, details::stdStrs)) {
-        sinkPtr = details::genFromNullOrStdStr(std::move(typeStr));
-    }
-
-    else if (details::inTypelist(typeStr, details::linuxStrs)) {
+    else if (details::inTypelist(type, details::linuxStrs)) {
 #ifdef __linux__
-        sinkPtr = details::genFromLinuxStr(std::move(typeStr), std::move(sinkTable));
+        sinkPtr = details::genFromLinuxStr(sink);
 #else
         return;
 #endif
-    } else if (details::inTypelist(typeStr, details::winStrs)) {
+    } else if (details::inTypelist(type, details::winStrs)) {
 #ifdef _WIN32
-        sinkPtr = details::genFromWinStr(std::move(typeStr));
+        sinkPtr = details::genFromWinStr(sink);
 #else
         return;
 #endif
     }
 
-    if (level != "") {
-        if (!details::levelMap.contains(level))
-            throw std::out_of_range("KDSPDSetup: level "s + level.str + " not found"s);
+    if (sink.level.has_value() && !sink.level->empty()) {
+        if (!details::levelMap.contains(*sink.level))
+            throw std::out_of_range("KDSPDSetup: level "s + *sink.level + " not found"s);
 
-        sinkPtr->set_level(details::levelMap.at(level));
+        sinkPtr->set_level(details::levelMap.at(*sink.level));
     }
 
     details::SPDMaps::emplaceSinkMap(std::make_pair(name, sinkPtr));
 }
 
-void setupSinks(toml::value const &data)
+void setupSinks(Configuration const &config)
 {
-    auto sinks = toml::find<std::vector<toml::table>>(data, "sink");
-
-    for (auto &&sinkTable : sinks) {
-        setupSink(std::move(sinkTable));
+    for (auto const &sink : config.sink) {
+        setupSink(sink);
     }
 }
 
-void setupPatterns(toml::value const &data)
+void setupPatterns(Configuration const &config)
 {
-    if (data.contains("global_pattern")) {
-        auto const globalPattern = toml::find<toml::string>(data, "global_pattern");
-        spdlog::set_pattern(globalPattern);
+    if (config.global_pattern.has_value()) {
+        spdlog::set_pattern(*config.global_pattern);
     }
 
-    if (data.contains("pattern")) {
-        auto const patterns = toml::find<std::vector<toml::table>>(data, "pattern");
-
-        for (auto &&patternTable : patterns) {
-            auto const name = patternTable.at("name").as_string();
-            auto const value = patternTable.at("value").as_string();
-
-            details::SPDMaps::emplacePatternMap(std::make_pair(name, value));
-        }
+    for (auto const &pattern : config.pattern) {
+        details::SPDMaps::emplacePatternMap(std::make_pair(pattern.name, pattern.value));
     }
 }
 
-void setupThreadPools(toml::value const &data)
+void setupThreadPools(Configuration const &config)
 {
-    if (data.contains("global_thread_pool")) {
-        auto const globalThreadPool = toml::find(data, "global_thread_pool");
-
-        auto const queueSize = toml::find<std::size_t>(globalThreadPool, "queue_size");
-        auto const numThreads = toml::find<std::size_t>(globalThreadPool, "num_threads");
-        spdlog::init_thread_pool(queueSize, numThreads);
+    if (config.global_thread_pool.has_value()) {
+        spdlog::init_thread_pool(config.global_thread_pool->queue_size, config.global_thread_pool->num_threads);
     }
 
-    if (data.contains("thread_pool")) {
-        auto const threadPools = toml::find<std::vector<toml::table>>(data, "thread_pool");
-
-        for (auto &&poolTable : threadPools) {
-            auto const name = poolTable.at("name").as_string();
-            auto const queueSize = static_cast<std::size_t>(poolTable.at("queue_size").as_integer());
-            auto const numThreads = static_cast<std::size_t>(poolTable.at("num_threads").as_integer());
-
-            details::SPDMaps::emplaceThreadPoolMap(std::make_pair(name, std::make_pair(queueSize, numThreads)));
-        }
+    for (auto const &threadPool : config.thread_pool) {
+        details::SPDMaps::emplaceThreadPoolMap(
+                std::make_pair(threadPool.name, std::make_pair(threadPool.queue_size, threadPool.num_threads)));
     }
 }
 
-void registerAsynchronousLogger(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
-                                toml::string const &pattern)
+void registerAsynchronousLogger(LoggerConfig const &logger, std::vector<spdlog::sink_ptr> const &sinkList,
+                                std::string const &pattern)
 {
-    auto const threadPool = (loggerTable.contains("thread_pool")) ? loggerTable.at("thread_pool").as_string() : "";
-
     static std::shared_ptr<spdlog::details::thread_pool> threadPoolPtr;
 
-    if (threadPool != "") {
+    if (logger.thread_pool.has_value() && !logger.thread_pool->empty()) {
+        auto const &threadPool = *logger.thread_pool;
+
         if (!details::SPDMaps::threadPoolMap().contains(threadPool))
-            throw std::out_of_range("KDSPDSetup: threadpool "s + threadPool.str + " not found"s);
+            throw std::out_of_range("KDSPDSetup: threadpool "s + threadPool + " not found"s);
 
         auto const threadPoolPair = details::SPDMaps::threadPoolMap().at(threadPool);
         auto const queueSize = threadPoolPair.first;
@@ -166,85 +135,78 @@ void registerAsynchronousLogger(toml::table const &loggerTable, toml::string con
         threadPoolPtr = spdlog::thread_pool();
     }
 
-    auto const overflowPolicy =
-            (loggerTable.contains("overflow_policy")) ? loggerTable.at("overflow_policy").as_string() : "block";
+    auto const overflowPolicy = logger.overflow_policy.value_or("block");
 
     if (!details::overflowMap.contains(overflowPolicy))
-        throw std::out_of_range("KDSPDSetup: overflow policy "s + overflowPolicy.str + " not found"s);
+        throw std::out_of_range("KDSPDSetup: overflow policy "s + overflowPolicy + " not found"s);
 
-    auto logger = std::make_shared<spdlog::async_logger>(name, sinkList.begin(), sinkList.end(), std::move(threadPoolPtr),
-                                                         details::overflowMap.at(overflowPolicy));
+    auto asyncLogger = std::make_shared<spdlog::async_logger>(logger.name, sinkList.begin(), sinkList.end(),
+                                                              std::move(threadPoolPtr),
+                                                              details::overflowMap.at(overflowPolicy));
 
-    if (pattern != "") {
-        logger->set_pattern(pattern);
+    if (!pattern.empty()) {
+        asyncLogger->set_pattern(pattern);
     }
 
-    spdlog::register_logger(logger);
+    spdlog::register_logger(asyncLogger);
 }
 
-void registerSynchronousLogger(toml::table const &loggerTable, toml::string const &name, std::vector<spdlog::sink_ptr> const &sinkList,
-                               toml::string const &pattern)
+void registerSynchronousLogger(LoggerConfig const &logger, std::vector<spdlog::sink_ptr> const &sinkList,
+                               std::string const &pattern)
 {
-    auto logger = std::make_shared<spdlog::logger>(name, sinkList.cbegin(), sinkList.cend());
-    if (pattern != "") {
-        logger->set_pattern(static_cast<std::string>(pattern));
+    auto syncLogger = std::make_shared<spdlog::logger>(logger.name, sinkList.cbegin(), sinkList.cend());
+    if (!pattern.empty()) {
+        syncLogger->set_pattern(pattern);
     }
 
-    if (loggerTable.contains("level")) {
-        auto const level = loggerTable.at("level").as_string();
+    if (logger.level.has_value() && !logger.level->empty()) {
+        if (!details::levelMap.contains(*logger.level))
+            throw std::out_of_range("KDSPDSetup: level "s + *logger.level + " not found"s);
 
-        if (!details::levelMap.contains(level))
-            throw std::out_of_range("KDSPDSetup: level "s + level.str + " not found"s);
-
-        logger->set_level(details::levelMap.at(level));
+        syncLogger->set_level(details::levelMap.at(*logger.level));
     }
 
-    spdlog::register_logger(logger);
+    spdlog::register_logger(syncLogger);
 }
 
-void setupLogger(toml::table const &loggerTable)
+void setupLogger(LoggerConfig const &logger)
 {
-    auto const name = loggerTable.at("name").as_string();
+    auto const &name = logger.name;
     if (spdlog::get(name) != nullptr) {
         return;
     }
 
-    auto const sinks = loggerTable.at("sinks").as_array();
-
     auto sinkList = std::vector<spdlog::sink_ptr>{};
-    for (auto &&sink : sinks) {
-        if (details::SPDMaps::sinkMap().contains(sink.as_string())) {
-            sinkList.emplace_back(details::SPDMaps::sinkMap().at(sink.as_string()));
+    for (auto const &sinkName : logger.sinks) {
+        if (details::SPDMaps::sinkMap().contains(sinkName)) {
+            sinkList.emplace_back(details::SPDMaps::sinkMap().at(sinkName));
         } else {
             // ignore sink instead of throwing, but notify that this happens
-            std::cerr << "KDSPDSetup: setting up logger " << name
-                      << " - skipped sink " << sink.as_string().str << " as it was not found";
+            std::cerr << "KDSPDSetup: setting up logger " << name << " - skipped sink " << sinkName
+                      << " as it was not found";
         }
     }
 
-    std::string pattern = "";
+    auto pattern = std::string{};
 
-    if (loggerTable.contains("pattern")) {
-        if (!details::SPDMaps::patternMap().contains(loggerTable.at("pattern").as_string()))
-            throw std::out_of_range("KDSPDSetup: pattern "s + loggerTable.at("pattern").as_string().str + " not found"s);
+    if (logger.pattern.has_value() && !logger.pattern->empty()) {
+        if (!details::SPDMaps::patternMap().contains(*logger.pattern))
+            throw std::out_of_range("KDSPDSetup: pattern "s + *logger.pattern + " not found"s);
 
-        pattern = details::SPDMaps::patternMap().at(loggerTable.at("pattern").as_string());
+        pattern = details::SPDMaps::patternMap().at(*logger.pattern);
     }
 
-    auto const type = (loggerTable.contains("type")) ? loggerTable.at("type").as_string() : "";
-
-    if (type == "async") {
-        registerAsynchronousLogger(loggerTable, name, sinkList, pattern);
+    if (logger.type == "async") {
+        registerAsynchronousLogger(logger, sinkList, pattern);
     } else {
-        registerSynchronousLogger(loggerTable, name, sinkList, pattern);
+        registerSynchronousLogger(logger, sinkList, pattern);
     }
 }
 
-void setupLoggers(toml::value const &data)
+void setupLoggers(Configuration const &config)
 {
-    auto const loggers = toml::find<std::vector<toml::table>>(data, "logger");
-    for (auto &&loggerTable : loggers) {
-        setupLogger(loggerTable);
+    for (auto const &logger : config.logger) {
+        setupLogger(logger);
     }
 }
 

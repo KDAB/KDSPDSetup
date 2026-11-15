@@ -6,9 +6,9 @@
 #
 # Contact KDAB at <info@kdab.com> for commercial licensing options.
 #
-set(HEADERS details.h kdspdsetup.h setup.h)
+set(HEADERS configuration.h details.h kdspdsetup.h setup.h)
 
-set(SOURCES details.cpp kdspdsetup.cpp setup.cpp)
+set(SOURCES configuration.cpp details.cpp kdspdsetup.cpp setup.cpp)
 
 add_library(
     KDSpdSetup STATIC
@@ -18,7 +18,7 @@ add_library(
     KDSpdSetup::KDSpdSetup ALIAS KDSpdSetup
 )
 
-set(KDSPDSETUP_PUBLIC_LIBS spdlog::spdlog toml11::toml11)
+set(KDSPDSETUP_PUBLIC_LIBS spdlog::spdlog reflectcpp)
 
 set(KDSPDSETUP_EXPORT_TARGETS KDSpdSetup)
 

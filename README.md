@@ -18,7 +18,7 @@ KDSPDSetup is a minimal reimplementation of the unmaintained [spdlog_setup](http
 
 Complete documentation is available [here](https://kdab.github.io/KDSPDSetup).
 
-Given a TOML file containing configuration parameters, `spdlog` loggers for your project can be set up with a single call to `KDSPDSetup::setupFrom`, as shown below:
+Given a configuration file containing configuration parameters, `spdlog` loggers for your project can be set up with a single call to `KDSPDSetup::setupFrom`, as shown below. The file may be written in TOML, JSON or YAML; the format is derived from the file name extension.
 
 ```cpp
 #include <KDSpdSetup/kdspdsetup.h>
@@ -63,7 +63,7 @@ The following compiler versions should be sufficient, but this has not been full
 
 | ![GNU Badge](https://img.shields.io/badge/gcc-A42E2B?logo=gnu&logoColor=fff&style=for-the-badge) | ![LLVM Badge](https://img.shields.io/badge/clang-262D3A?logo=llvm&logoColor=fff&style=for-the-badge) | ![Visual Studio Badge](https://img.shields.io/badge/msvc-5C2D91?logo=visualstudio&logoColor=fff&style=for-the-badge) | ![NVIDIA Badge](https://img.shields.io/badge/nvcc-76B900?logo=nvidia&logoColor=fff&style=for-the-badge) | ![Intel Badge](https://img.shields.io/badge/Intel%20C++-0071C5?logo=intel&logoColor=fff&style=for-the-badge)
 |-|-|-|-|-
-| GCC 10+ | Clang 8+ | MSVC 19.22+ | NVCC 12.0+ | Intel C++ 2021.1+
+| GCC 11.4+ | Clang 14+ | MSVC 19.38+ | NVCC 12.0+ | Intel C++ 2021.1+
 
 If any [dependencies](#dependencies) are not found, CMake's FetchContent will use [`git`](https://git-scm.com/) to retrieve them. Thus, `git` is also a requirement in this case.
 
@@ -73,7 +73,7 @@ Aside from [spdlog](https://github.com/gabime/spdlog), there are three additiona
 
 | Purpose       | Lib                                           | Needed
 | ------------- | --------------------------------------------- | ----------
-| TOML parsing  | [toml11](https://github.com/ToruNiina/toml11) | Always
+| Serialization | [reflect-cpp](https://github.com/munich-data-engineering/reflect-cpp) | Always
 | Testing       | [doctest](https://github.com/doctest/doctest) | Tests only
 | Documentation | [doxygen](https://github.com/doxygen/doxygen) | Documentation only
 
@@ -198,7 +198,25 @@ target_link_libraries(untitled KDSpdSetup::KDSpdSetup)
 
 ### Configuration
 
-Writing configuration files that can be used by KDSPDSetup is simple.
+Writing configuration files that can be used by KDSPDSetup is simple. Configuration files are read with
+[reflect-cpp](https://github.com/munich-data-engineering/reflect-cpp), so the same document can be written in
+TOML, JSON or YAML. The format is derived from the file name extension:
+
+| Extension | Format |
+| --------- | ------ |
+| `.toml` | TOML |
+| `.json` | JSON |
+| `.yaml`, `.yml` | YAML |
+
+Any other extension is rejected with a `std::invalid_argument`. The format can also be passed explicitly with
+`KDSPDSetup::setupFrom(path, KDSPDSetup::configuration::Format::json)`, and a document that is already in
+memory can be applied with `KDSPDSetup::setupFromString(content, format)`.
+
+The examples below are written in TOML, but every key is spelled the same way in JSON and YAML.
+
+Documents are validated while they are read. A sink whose type requires a `filename` but does not have one,
+a logger without a name, or a value of the wrong type is reported as a `std::runtime_error` before any
+logger is created.
 
 #### Sinks
 
@@ -361,9 +379,11 @@ The options for overflow policy are `"block"` and `"overrun_oldest"`. If not spe
 This repository contains a few example configuration files:
 
 - `examples/example.toml`
-- `tests/full/full-linux.toml`
+- `examples/example.json`, `examples/example.yaml` (the same document in the other two formats)
+- `tests/full/full-win32.toml`
 - `tests/full/full-linux.toml`
 - `tests/pre/pre.toml`
+- `tests/config/example.toml`, `tests/config/example.json`, `tests/config/example.yaml` (the same document in all three formats)
 
 Huge thanks to [guangie88](https://github.com/guangie88) for providing these examples in the original [spdlog_setup](https://github.com/guangie88/spdlog_setup) project. The files in that project are available under the terms of the [MIT](https://github.com/guangie88/spdlog_setup/blob/master/LICENSE) license.
 

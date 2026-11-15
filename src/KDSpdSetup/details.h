@@ -9,6 +9,8 @@
 */
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <unordered_map>
 #include <map>
 #include <vector>
@@ -29,7 +31,7 @@
 #include <spdlog/sinks/msvc_sink.h>
 #endif
 
-#include <toml.hpp>
+#include "configuration.h"
 
 /**
  * @brief This namespace contains implementation details and helpers used by functions in
@@ -42,7 +44,7 @@ namespace KDSPDSetup::details {
 
 /**
  * @brief Vector of strings of `spdlog` standard output sink typenames. Used when matching a `type` string
- * from a TOML table to determine what additional type-specific fields should be read from the table.
+ * from the configuration to determine what additional type-specific fields should be read.
  *
  */
 static auto const stdStrs{ std::vector<std::string>{ "stdout_sink_st", "stdout_sink_mt", "stdout_color_sink_st",
@@ -53,49 +55,49 @@ static auto const stdStrs{ std::vector<std::string>{ "stdout_sink_st", "stdout_s
 
 /**
  * @brief Vector of strings of `spdlog` basic file sink typenames. Used when matching a `type` string
- * from a TOML table to determine what additional type-specific fields should be read from the table.
+ * from the configuration to determine what additional type-specific fields should be read.
  *
  */
 static auto const fileStrs{ std::vector<std::string>{ "basic_file_sink_st", "basic_file_sink_mt" } };
 
 /**
  * @brief Vector of strings of `spdlog` rotating file sink typenames. Used when matching a `type` string
- * from a TOML table to determine what additional type-specific fields should be read from the table.
+ * from the configuration to determine what additional type-specific fields should be read.
  *
  */
 static auto const rotateStrs{ std::vector<std::string>{ "rotating_file_sink_st", "rotating_file_sink_mt" } };
 
 /**
  * @brief Vector of strings of `spdlog` daily file sink typenames. Used when matching a `type` string
- * from a TOML table to determine what additional type-specific fields should be read from the table.
+ * from the configuration to determine what additional type-specific fields should be read.
  *
  */
 static auto const dailyStrs{ std::vector<std::string>{ "daily_file_sink_st", "daily_file_sink_mt" } };
 
 /**
  * @brief Vector of strings of `spdlog` null sink typenames. Used when matching a `type` string
- * from a TOML table to determine what additional type-specific fields should be read from the table.
+ * from the configuration to determine what additional type-specific fields should be read.
  *
  */
 static auto const nullStrs{ std::vector<std::string>{ "null_sink_st", "null_sink_mt" } };
 
 /**
  * @brief Vector of strings of `spdlog` syslog sink typenames. Used when matching a `type` string
- * from a TOML table to determine what additional type-specific fields should be read from the table.
+ * from the configuration to determine what additional type-specific fields should be read.
  *
  */
 static auto const linuxStrs{ std::vector<std::string>{ "syslog_sink_st", "syslog_sink_mt" } };
 
 /**
  * @brief Vector of strings of `spdlog` MSVC sink typenames. Used when matching a `type` string
- * from a TOML table to determine what additional type-specific fields should be read from the table.
+ * from the configuration to determine what additional type-specific fields should be read.
  *
  */
 static auto const winStrs{ std::vector<std::string>{ "msvc_sink_st", "msvc_sink_mt" } };
 
 /**
  * @brief A simple map associating strings of `spdlog::level::level_enum` names to the enums themselves.
- * Used to pass an enum to `spdlog::logger::set_level` given a string read from a TOML table.
+ * Used to pass an enum to `spdlog::logger::set_level` given a level string from the configuration.
  *
  */
 static auto const levelMap{ std::unordered_map<std::string, spdlog::level::level_enum>{
@@ -111,11 +113,11 @@ static auto const levelMap{ std::unordered_map<std::string, spdlog::level::level
 
 /**
  * @brief A simple map associating strings of `spdlog::async_overflow_policy` names to the enums themselves.
- * Used to pass an overflow policy to the constructor for an async logger given a string either read from a
- * TOML table or set to the default `"block"`.
+ * Used to pass an overflow policy to the constructor for an async logger given a string either read from
+ * the configuration or set to the default `"block"`.
  *
  */
-static auto const overflowMap{ std::map<toml::string, spdlog::async_overflow_policy>{
+static auto const overflowMap{ std::map<std::string, spdlog::async_overflow_policy>{
         { "overrun_oldest", spdlog::async_overflow_policy::overrun_oldest },
         { "block", spdlog::async_overflow_policy::block },
 } };
@@ -133,30 +135,30 @@ public:
      * @brief Getter method for the private member KDSPDSetup::details::SPDMaps::mSinkMap.
      * Used to index the map and obtain a sink pointer by name when constructing loggers.
      *
-     * @return std::map<toml::string, spdlog::sink_ptr> const& A `const` reference to
+     * @return std::map<std::string, spdlog::sink_ptr> const& A `const` reference to
      * the private data member KDSPDSetup::details::SPDMaps::mSinkMap.
      */
-    static auto sinkMap() -> std::map<toml::string, spdlog::sink_ptr> const &;
+    static auto sinkMap() -> std::map<std::string, spdlog::sink_ptr> const &;
 
     /**
      * @brief Getter method for the private member KDSPDSetup::details::SPDMaps::mPatternMap.
      * Used to index the map and obtain a format string by name, to pass into `spdlog::set_pattern`
      * when constructing sinks or loggers.
      *
-     * @return std::map<toml::string, toml::string> const& A `const` reference to
+     * @return std::map<std::string, std::string> const& A `const` reference to
      * the private data member KDSPDSetup::details::SPDMaps::mPatternMap.
      */
-    static auto patternMap() -> std::map<toml::string, toml::string> const &;
+    static auto patternMap() -> std::map<std::string, std::string> const &;
 
     /**
      * @brief Getter method for the private member KDSPDSetup::details::SPDMaps::mThreadPoolMap.
      * Used to index the map by thread pool name when constructing asynchronous loggers, to obtain
      * a pair containing queue size and thread count.
      *
-     * @return std::map<toml::string, std::pair<std::size_t, std::size_t>> const& A `const` reference to
+     * @return std::map<std::string, std::pair<std::size_t, std::size_t>> const& A `const` reference to
      * the private data member KDSPDSetup::details::SPDMaps::mThreadPoolMap.
      */
-    static auto threadPoolMap() -> std::map<toml::string, std::pair<std::size_t, std::size_t>> const &;
+    static auto threadPoolMap() -> std::map<std::string, std::pair<std::size_t, std::size_t>> const &;
 
     /**
      * @brief Emplace a pair in the private member KDSPDSetup::details::SPDMaps::mSinkMap.
@@ -166,7 +168,7 @@ public:
      * @param _pr An rvalue reference pair containing name and a sink pointer, to be emplaced in
      * KDSPDSetup::details::SPDMaps::mSinkMap.
      */
-    static void emplaceSinkMap(std::pair<toml::string, spdlog::sink_ptr> &&_pr);
+    static void emplaceSinkMap(std::pair<std::string, spdlog::sink_ptr> &&_pr);
 
     /**
      * @brief Emplace a pair in the private member KDSPDSetup::details::SPDMaps::mSinkMap.
@@ -178,7 +180,7 @@ public:
      * @param _pr An rvalue reference pair containing name and pattern string, to be emplaced
      * in KDSPDSetup::details::SPDMaps::mPatternMap.
      */
-    static void emplacePatternMap(std::pair<toml::string, toml::string> &&_pr);
+    static void emplacePatternMap(std::pair<std::string, std::string> &&_pr);
 
     /**
      * @brief Emplace a pair in the private member KDSPDSetup::details::SPDMaps::mThreadPoolMap.
@@ -189,7 +191,7 @@ public:
      * @param _pr An rvalue reference pair containing name and a nested pair containing a queue size
      * and thread count, to be emplaced in KDSPDSetup::details::SPDMaps::mThreadPoolMap.
      */
-    static void emplaceThreadPoolMap(std::pair<toml::string, std::pair<std::size_t, std::size_t>> &&_pr);
+    static void emplaceThreadPoolMap(std::pair<std::string, std::pair<std::size_t, std::size_t>> &&_pr);
 
 private:
     /**
@@ -198,7 +200,7 @@ private:
      * and looked up from the map when constructing loggers.
      *
      */
-    static inline std::map<toml::string, spdlog::sink_ptr> mSinkMap{};
+    static inline std::map<std::string, spdlog::sink_ptr> mSinkMap{};
 
     /**
      * @brief Map that associates string names to pattern strings. When `pattern` tables are read
@@ -206,7 +208,7 @@ private:
      * and looked up from the map when constructing loggers and sinks.
      *
      */
-    static inline std::map<toml::string, toml::string> mPatternMap{};
+    static inline std::map<std::string, std::string> mPatternMap{};
 
     /**
      * @brief Map that associates string names to pairs of thread pool fields. The pairs represent the
@@ -216,7 +218,7 @@ private:
      * constructing asynchronous loggers.
      *
      */
-    static inline std::map<toml::string, std::pair<std::size_t, std::size_t>> mThreadPoolMap{};
+    static inline std::map<std::string, std::pair<std::size_t, std::size_t>> mThreadPoolMap{};
 };
 
 /**
@@ -327,21 +329,16 @@ bool inTypelist(std::string const &typeStr, std::vector<std::string> const &strL
 
 /**
  * @brief Generates the argument list for rotating file sink constructor as a tuple and returns it.
- * Given a TOML table representing a rotating file sink, a base filename, and a number of maximum files,
- * extract and calculate the maximum file size from the table, and create a tuple with the base filename,
+ * Given the configuration of a rotating file sink,
+ * extract and calculate the maximum file size from the configuration, and create a tuple with the base filename,
  * max size, and max number of files in the correct order. Return this tuple so the values can be passed into
  * the constructor for rotating file sink, in that order.
  *
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param baseFilename The base filename to later pass into the constructor for `spdlog::sinks::rotating_file_sink`.
- * @param maxFiles The maximum number of files. This is later passed into the constructor for
- * `spdlog::sinks::rotating_file_sink`.
- * @return std::tuple<toml::string const, std::size_t const, std::size_t const> A tuple containing the argument list
+ * @param sink Typed representation of a particular sink specified in a configuration file.
+ * @return std::tuple<std::string, std::size_t, std::size_t> A tuple containing the argument list
  * for rotating file sink constructor.
  */
-auto createRotatingFileSinkTuple(toml::table const &sinkTable, toml::string &&baseFilename,
-                                 std::size_t const &maxFiles)
-        -> std::tuple<toml::string const, std::size_t const, std::size_t const>;
+auto createRotatingFileSinkTuple(SinkConfig const &sink) -> std::tuple<std::string, std::size_t, std::size_t>;
 
 /**
  * @brief Create a rotating file sink shared pointer and return it. Calls KDSPDSetup::details::createRotatingFileSinkTuple
@@ -351,34 +348,29 @@ auto createRotatingFileSinkTuple(toml::table const &sinkTable, toml::string &&ba
  *
  * @tparam Mutex The template parameter to pass to the sink object. Will be either `spdlog::details::null_mutex`
  * or `std::mutex`, for single-threaded or multi-threaded sinks respectively.
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param baseFilename The base filename to pass into the constructor for `spdlog::sinks::rotating_file_sink`.
- * @param maxFiles The maximum number of files. This is passed into the constructor for `spdlog::sinks::rotating_file_sink`.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return std::shared_ptr<spdlog::sinks::rotating_file_sink<Mutex>> A rotating file sink pointer that
  * can be upcast to an `spdlog::sink_ptr` and added to an entry in KDSPDSetup::details::SPDMaps::mSinkMap.
  */
 template<typename Mutex>
-auto createRotatingFileSinkPtr(toml::table const &sinkTable, toml::string &&baseFilename,
-                               std::size_t const &maxFiles)
+auto createRotatingFileSinkPtr(SinkConfig const &sink)
         -> std::shared_ptr<spdlog::sinks::rotating_file_sink<Mutex>>
 {
-    auto tup = createRotatingFileSinkTuple(sinkTable, std::move(baseFilename), maxFiles);
+    auto tup = createRotatingFileSinkTuple(sink);
     return std::make_shared<spdlog::sinks::rotating_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup),
                                                                       std::get<2>(tup));
 }
 
 /**
  * @brief Generates the argument list for basic file sink constructor as a tuple and returns it.
- * Given a TOML table representing a basic file sink and a boolean value for `truncate`, extract the `filename`
- * from the table, and create a tuple with the `filename` and `truncate` in the order in which they will be passed
+ * Given the configuration of a basic file sink, extract the `filename`
+ * and `truncate`, and create a tuple in the order in which they will be passed
  * into the basic file sink constructor. Return this tuple.
  *
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param truncate The value of `truncate` to pass into the constructor for basic file sink.
- * @return std::tuple<toml::string const, bool const> A tuple containing the argument list for basic file sink constructor.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
+ * @return std::tuple<std::string, bool> A tuple containing the argument list for basic file sink constructor.
  */
-auto createFileSinkTuple(toml::table const &sinkTable, bool const &truncate)
-        -> std::tuple<toml::string const, bool const>;
+auto createFileSinkTuple(SinkConfig const &sink) -> std::tuple<std::string, bool>;
 
 /**
  * @brief Create a basic file sink shared pointer and return it. Calls KDSPDSetup::details::createFileSinkTuple
@@ -388,37 +380,29 @@ auto createFileSinkTuple(toml::table const &sinkTable, bool const &truncate)
  *
  * @tparam Mutex The template parameter to pass to the sink object. Will be either `spdlog::details::null_mutex`
  * or `std::mutex`, for single-threaded or multi-threaded sinks respectively.
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param truncate The value of `truncate` to pass into the constructor for basic file sink.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>> A basic file sink pointer that
  * can be upcast to an `spdlog::sink_ptr` and added to an entry in KDSPDSetup::details::SPDMaps::mSinkMap.
  */
 template<typename Mutex>
-auto createFileSinkPtr(toml::table const &sinkTable, bool const &truncate)
-        -> std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>>
+auto createFileSinkPtr(SinkConfig const &sink) -> std::shared_ptr<spdlog::sinks::basic_file_sink<Mutex>>
 {
-    auto tup = createFileSinkTuple(sinkTable, truncate);
+    auto tup = createFileSinkTuple(sink);
     return std::make_shared<spdlog::sinks::basic_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup));
 }
 
 /**
  * @brief Generates the argument list for daily file sink constructor as a tuple and returns it.
- * Given a TOML table representing a basic file sink, a base filename, and a number of maximum files,
- * and a boolean value for `truncate`, extract the `rotation_hour` and `rotation_minute` from the
- * table, and create a tuple with the base filename, rotation hour, rotation minute, truncate, and
+ * Given the configuration of a daily file sink, extract the `rotation_hour` and `rotation_minute`, and
+ * create a tuple with the base filename, rotation hour, rotation minute, truncate, and
  * maximum file count in the order in which they will be passed to the basic file sink constructor.
  * Return this tuple.
  *
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param truncate The value of `truncate` to pass into the constructor for daily file sink.
- * @param baseFilename The base filename to pass into the constructor for daily file sink.
- * @param maxFiles The maximum number of files. This is passed into the constructor for daily file sink.
- * @return std::tuple<toml::string const, int const, int const, bool const, uint16_t const> A tuple containing
+ * @param sink Typed representation of a particular sink specified in a configuration file.
+ * @return std::tuple<std::string, int, int, bool, std::size_t> A tuple containing
  * the argument list for daily file sink constructor.
  */
-auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
-                              uint16_t const &maxFiles)
-        -> std::tuple<toml::string const, int const, int const, bool const, uint16_t const>;
+auto createDailyFileSinkTuple(SinkConfig const &sink) -> std::tuple<std::string, int, int, bool, std::size_t>;
 
 /**
  * @brief Create a daily file sink shared pointer and return it. Calls KDSPDSetup::details::createDailyFileSinkTuple
@@ -428,20 +412,17 @@ auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &truncate, tom
  *
  * @tparam Mutex The template parameter to pass to the sink object. Will be either `spdlog::details::null_mutex`
  * or `std::mutex`, for single-threaded or multi-threaded sinks respectively.
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param truncate The value of `truncate` to pass into the constructor for daily file sink.
- * @param baseFilename The base filename to pass into the constructor for daily file sink.
- * @param maxFiles The maximum number of files. This is passed into the constructor for daily file sink.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>> A daily file sink pointer that
  * can be upcast to an `spdlog::sink_ptr` and added to an entry in KDSPDSetup::details::SPDMaps::mSinkMap.
  */
 template<typename Mutex>
-auto createDailyFileSinkPtr(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
-                            uint16_t const &maxFiles) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>
+auto createDailyFileSinkPtr(SinkConfig const &sink) -> std::shared_ptr<spdlog::sinks::daily_file_sink<Mutex>>
 {
-    auto tup = createDailyFileSinkTuple(std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
+    auto tup = createDailyFileSinkTuple(sink);
     return std::make_shared<spdlog::sinks::daily_file_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
-                                                                   std::get<3>(tup), std::get<4>(tup));
+                                                                   std::get<3>(tup),
+                                                                   static_cast<uint16_t>(std::get<4>(tup)));
 }
 
 /**
@@ -524,18 +505,18 @@ auto createStderrColorSinkPtr() -> std::shared_ptr<spdlog::sinks::ansicolor_stde
 #ifdef __linux__
 /**
  * @brief Generates the argument list for syslog sink constructor as a tuple and returns it.
- * Given a TOML table representing a basic file sink, attempt to extract `ident`, `syslog_option`, and
+ * Given the configuration of a syslog sink, read `ident`, `syslog_option`, and
  * `syslog_facility`. Set default values for any of these that aren't found. Create a tuple
  * with the ident, syslog option, syslog facility, and enable formatting (which is always true here).
  * Return the tuple with the values in this order such that they can be passed in the correct order to the
  * constructor for syslog sink.
  *
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @return std::tuple<toml::string const, int const, int const, bool const> A tuple containing the argument list
+ * @param sink Typed representation of a particular sink specified in a configuration file.
+ * @return std::tuple<std::string, int, int, bool> A tuple containing the argument list
  * for syslog sink constructor.
  */
-auto createSyslogSinkTuple(toml::table const &sinkTable)
-        -> std::tuple<toml::string const, int const, int const, bool const>;
+auto createSyslogSinkTuple(SinkConfig const &sink)
+        -> std::tuple<std::string const, int const, int const, bool const>;
 
 /**
  * @brief Create a syslog sink shared pointer and return it. Calls KDSPDSetup::details::createSyslogSinkTuple
@@ -545,14 +526,14 @@ auto createSyslogSinkTuple(toml::table const &sinkTable)
  *
  * @tparam Mutex The template parameter to pass to the sink object. Will be either `spdlog::details::null_mutex`
  * or `std::mutex`, for single-threaded or multi-threaded sinks respectively.
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>> A syslog sink pointer that
  * can be upcast to an `spdlog::sink_ptr` and added to an entry in KDSPDSetup::details::SPDMaps::mSinkMap.
  */
 template<typename Mutex>
-auto createSyslogSinkPtr(toml::table &&sinkTable) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>
+auto createSyslogSinkPtr(SinkConfig const &sink) -> std::shared_ptr<spdlog::sinks::syslog_sink<Mutex>>
 {
-    auto tup = createSyslogSinkTuple(std::move(sinkTable));
+    auto tup = createSyslogSinkTuple(std::move(sink));
     return std::make_shared<spdlog::sinks::syslog_sink<Mutex>>(std::get<0>(tup), std::get<1>(tup), std::get<2>(tup),
                                                                std::get<3>(tup));
 }
@@ -576,78 +557,66 @@ auto createMsvcSinkPtr() -> std::shared_ptr<spdlog::sinks::msvc_sink<Mutex>>
 
 /**
  * @brief Return the result of calling KDSPDSetup::details::createFileSinkPtr with the correct template argument
- * based on the value of `typeStr`. Uses macros `createFileSinkStPtr` and `createFileSinkMtPtr` for clarity.
+ * based on the value of `sink.type`. Uses macros `createFileSinkStPtr` and `createFileSinkMtPtr` for clarity.
  * This function is called by KDSPDSetup::setup::handleTruncatableSink.
  *
- * @param typeStr A string of a typename of an spdlog sink.
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param truncate The value of `truncate` to pass into the constructor for basic file sink.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return spdlog::sink_ptr The result of calling KDSPDSetup::details::createFileSinkPtr.
  */
-auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate) -> spdlog::sink_ptr;
+auto genFromFileStr(SinkConfig const &sink) -> spdlog::sink_ptr;
 
 /**
  * @brief Return the result of calling KDSPDSetup::details::createRotatingFileSinkPtr with the correct template argument
- * based on the value of `typeStr`. Uses macros `createRotatingFileSinkStPtr` and `createRotatingFileSinkMtPtr` for clarity.
+ * based on the value of `sink.type`. Uses macros `createRotatingFileSinkStPtr` and `createRotatingFileSinkMtPtr` for clarity.
  * This function is called by KDSPDSetup::setup::handleMultipleFileSink.
  *
- * @param typeStr A string of a typename of an spdlog sink.
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param baseFilename The base filename to pass into the constructor for rotating file sink.
- * @param maxFiles The maximum number of files. This is passed into the constructor for rotating file sink.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return spdlog::sink_ptr The result of calling KDSPDSetup::details::createRotatingFileSinkPtr.
  */
-auto genFromRotateStr(toml::string &&typeStr, toml::table &&sinkTable, toml::string &&baseFilename,
-                      std::size_t const &maxFiles) -> spdlog::sink_ptr;
+auto genFromRotateStr(SinkConfig const &sink) -> spdlog::sink_ptr;
 
 /**
  * @brief Return the result of calling KDSPDSetup::details::createDailyFileSinkPtr with the correct template argument
- * based on the value of `typeStr`. Uses macros `createDailyFileSinkStPtr` and `createDailyFileSinkMtPtr` for clarity.
+ * based on the value of `sink.type`. Uses macros `createDailyFileSinkStPtr` and `createDailyFileSinkMtPtr` for clarity.
  * This function is called by KDSPDSetup::setup::handleMultipleFileSink.
  *
- * @param typeStr A string of a typename of an spdlog sink.
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
- * @param truncate The value of `truncate` to pass into the constructor for daily file sink.
- * @param baseFilename The base filename to pass into the constructor for daily file sink.
- * @param maxFiles The maximum number of files. This is passed into the constructor for daily file sink.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return spdlog::sink_ptr The result of calling KDSPDSetup::details::createDailyFileSinkPtr.
  */
-auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate,
-                     toml::string &&baseFilename, uint16_t const &maxFiles) -> spdlog::sink_ptr;
+auto genFromDailyStr(SinkConfig const &sink) -> spdlog::sink_ptr;
 
 /**
  * @brief Return the result of calling KDSPDSetup::details::createStdoutSinkPtr with the correct template argument or
- * KDSPDSetup::details::createNullSinkPtr, based on the value of `typeStr`. Uses macros `createStdoutSinkStPtr`
+ * KDSPDSetup::details::createNullSinkPtr, based on the value of `sink.type`. Uses macros `createStdoutSinkStPtr`
  * and `createStdoutSinkMtPtr` for clarity.
  * This function is called by KDSPDSetup::setup::setupSink.
  *
- * @param typeStr A string of a typename of an spdlog sink.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return spdlog::sink_ptr The result of calling KDSPDSetup::details::createStdoutSinkPtr or KDSPDSetup::details::createNullSinkPtr.
  */
-auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr;
+auto genFromNullOrStdStr(SinkConfig const &sink) -> spdlog::sink_ptr;
 
 #ifdef __linux__
 /**
  * @brief Return the result of calling KDSPDSetup::details::createSyslogSinkPtr with the correct template argument
- * based on the value of `typeStr`. Uses macros `createSyslogSinkStPtr` and `createSyslogSinkMtPtr` for clarity.
+ * based on the value of `sink.type`. Uses macros `createSyslogSinkStPtr` and `createSyslogSinkMtPtr` for clarity.
  * This function is called by KDSPDSetup::setup::setupSink.
  *
- * @param typeStr A string of a typename of an spdlog sink.
- * @param sinkTable toml11 table representation for a particular sink specified in a configuration file.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return spdlog::sink_ptr The result of calling KDSPDSetup::details::createSyslogSinkPtr.
  */
-auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog::sink_ptr;
+auto genFromLinuxStr(SinkConfig const &sink) -> spdlog::sink_ptr;
 
 #elif _WIN32
 /**
  * @brief Return the result of calling KDSPDSetup::details::createMsvcSinkPtr with the correct template argument
- * based on the value of `typeStr`. Uses macros `createMsvcSinkStPtr` and `createMsvcSinkMtPtr` for clarity.
+ * based on the value of `sink.type`. Uses macros `createMsvcSinkStPtr` and `createMsvcSinkMtPtr` for clarity.
  * This function is called by KDSPDSetup::setup::setupSink.
  *
- * @param typeStr A string of a typename of an spdlog sink.
+ * @param sink Typed representation of a particular sink specified in a configuration file.
  * @return spdlog::sink_ptr The result of calling KDSPDSetup::details::createMsvcSinkPtr.
  */
-auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr;
+auto genFromWinStr(SinkConfig const &sink) -> spdlog::sink_ptr;
 
 #endif
 
