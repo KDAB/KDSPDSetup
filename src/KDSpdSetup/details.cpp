@@ -9,29 +9,47 @@
 */
 #include "details.h"
 
+#include <algorithm>
+#include <stdexcept>
+
+using std::literals::string_literals::operator""s;
+
 namespace KDSPDSetup::details {
 
-auto SPDMaps::sinkMap() -> std::map<toml::string, spdlog::sink_ptr> const &
+namespace {
+
+/// @brief Return a field that a sink type requires, or throw if the configuration did not provide it.
+auto required(std::optional<std::string> const &field, char const *fieldName) -> std::string
+{
+    if (!field.has_value() || field->empty()) {
+        throw std::runtime_error("KDSPDSetup: missing required field "s + fieldName + ".");
+    }
+    return *field;
+}
+
+} // namespace
+
+auto SPDMaps::sinkMap() -> std::map<std::string, spdlog::sink_ptr> const &
 {
     return mSinkMap;
 }
-auto SPDMaps::patternMap() -> std::map<toml::string, toml::string> const &
+auto SPDMaps::patternMap() -> std::map<std::string, std::string> const &
 {
     return mPatternMap;
 }
-auto SPDMaps::threadPoolMap() -> std::map<toml::string, std::pair<std::size_t, std::size_t>> const &
+auto SPDMaps::threadPoolMap() -> std::map<std::string, std::pair<std::size_t, std::size_t>> const &
 {
     return mThreadPoolMap;
 }
-void SPDMaps::emplaceSinkMap(std::pair<toml::string, spdlog::sink_ptr> &&_pr)
+void SPDMaps::emplaceSinkMap(std::pair<std::string, spdlog::sink_ptr> &&_pr)
 {
     mSinkMap.emplace(_pr);
 }
-void SPDMaps::emplacePatternMap(std::pair<toml::string, toml::string> &&_pr)
+void SPDMaps::emplacePatternMap(std::pair<std::string, std::string> &&_pr)
 {
     mPatternMap.emplace(_pr);
 }
-void SPDMaps::emplaceThreadPoolMap(std::pair<toml::string, std::pair<std::size_t, std::size_t>> &&_pr)
+void SPDMaps::emplaceThreadPoolMap(std::pair<std::string, std::pair<std::size_t, std::size_t>> &&_pr)
 {
     mThreadPoolMap.emplace(_pr);
 }
@@ -41,11 +59,9 @@ bool inTypelist(std::string const &typeStr, std::vector<std::string> const &strL
     return std::find(strList.cbegin(), strList.cend(), typeStr) != std::cend(strList);
 }
 
-auto createRotatingFileSinkTuple(toml::table const &sinkTable, toml::string &&baseFilename,
-                                 std::size_t const &maxFiles)
-        -> std::tuple<toml::string const, std::size_t const, std::size_t const>
+auto createRotatingFileSinkTuple(SinkConfig const &sink) -> std::tuple<std::string, std::size_t, std::size_t>
 {
-    auto const maxSize = static_cast<std::string>(sinkTable.at("max_size").as_string());
+    auto const maxSize = required(sink.max_size, "max_size");
     auto const maxSizeStrBack = maxSize.back();
     std::size_t maxSizeInt{};
 
@@ -78,23 +94,18 @@ auto createRotatingFileSinkTuple(toml::table const &sinkTable, toml::string &&ba
         maxSizeInt = std::stoi(maxSize);
     }
 
-    return std::make_tuple(std::move(baseFilename), maxSizeInt, maxFiles);
+    return std::make_tuple(required(sink.base_filename, "base_filename"), maxSizeInt, sink.max_files);
 }
 
-auto createFileSinkTuple(toml::table const &sinkTable, bool const &truncate) -> std::tuple<toml::string const, bool const>
+auto createFileSinkTuple(SinkConfig const &sink) -> std::tuple<std::string, bool>
 {
-    auto fileName = sinkTable.at("filename").as_string();
-    return std::make_tuple(std::move(fileName), truncate);
+    return std::make_tuple(required(sink.filename, "filename"), sink.truncate);
 }
 
-auto createDailyFileSinkTuple(toml::table &&sinkTable, bool const &truncate, toml::string &&baseFilename,
-                              uint16_t const &maxFiles)
-        -> std::tuple<toml::string const, int const, int const, bool const, uint16_t const>
+auto createDailyFileSinkTuple(SinkConfig const &sink) -> std::tuple<std::string, int, int, bool, std::size_t>
 {
-    auto rotationHour = static_cast<int>(sinkTable.at("rotation_hour").as_integer());
-    auto rotationMinute = static_cast<int>(sinkTable.at("rotation_minute").as_integer());
-
-    return std::make_tuple(std::move(baseFilename), rotationHour, rotationMinute, truncate, maxFiles);
+    return std::make_tuple(required(sink.base_filename, "base_filename"), sink.rotation_hour, sink.rotation_minute,
+                           sink.truncate, sink.max_files);
 }
 
 auto createNullSinkPtr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::details::null_mutex>>
@@ -103,15 +114,13 @@ auto createNullSinkPtr() -> std::shared_ptr<spdlog::sinks::null_sink<spdlog::det
 }
 
 #ifdef __linux__
-auto createSyslogSinkTuple(toml::table const &sinkTable)
-        -> std::tuple<toml::string const, int const, int const, bool const>
+auto createSyslogSinkTuple(SinkConfig const &sink) -> std::tuple<std::string, int, int, bool>
 {
-    auto ident = (sinkTable.contains("ident")) ? sinkTable.at("ident").as_string() : "";
+    auto ident = sink.ident.value_or("");
 
-    auto syslogOption = (sinkTable.contains("syslog_option")) ? static_cast<int>(sinkTable.at("syslog_option").as_integer()) : int{ 0 };
+    auto syslogOption = sink.syslog_option.value_or(int{ 0 });
 
-    auto syslogFacility =
-            (sinkTable.contains("syslog_facility")) ? static_cast<int>(sinkTable.at("syslog_facility").as_integer()) : LOG_USER; // macro
+    auto syslogFacility = sink.syslog_facility.value_or(LOG_USER); // macro
 
     bool enableFormatting = true;
 
@@ -119,46 +128,46 @@ auto createSyslogSinkTuple(toml::table const &sinkTable)
 }
 #endif
 
-auto genFromFileStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate) -> spdlog::sink_ptr
+auto genFromFileStr(SinkConfig const &sink) -> spdlog::sink_ptr
 {
-    if (typeStr == "basic_file_sink_st") {
-        return createFileSinkStPtr(sinkTable, truncate);
+    if (sink.type == "basic_file_sink_st") {
+        return createFileSinkStPtr(sink);
     }
-    if (typeStr == "basic_file_sink_mt") {
-        return createFileSinkMtPtr(sinkTable, truncate);
+    if (sink.type == "basic_file_sink_mt") {
+        return createFileSinkMtPtr(sink);
     }
 
     return nullptr;
 }
 
-auto genFromRotateStr(toml::string &&typeStr, toml::table &&sinkTable, toml::string &&baseFilename,
-                      std::size_t const &maxFiles) -> spdlog::sink_ptr
+auto genFromRotateStr(SinkConfig const &sink) -> spdlog::sink_ptr
 {
-    if (typeStr == "rotating_file_sink_st") {
-        return createRotatingFileSinkStPtr(std::move(sinkTable), std::move(baseFilename), maxFiles);
+    if (sink.type == "rotating_file_sink_st") {
+        return createRotatingFileSinkStPtr(sink);
     }
-    if (typeStr == "rotating_file_sink_mt") {
-        return createRotatingFileSinkMtPtr(std::move(sinkTable), std::move(baseFilename), maxFiles);
+    if (sink.type == "rotating_file_sink_mt") {
+        return createRotatingFileSinkMtPtr(sink);
     }
 
     return nullptr;
 }
 
-auto genFromDailyStr(toml::string &&typeStr, toml::table &&sinkTable, bool const &truncate,
-                     toml::string &&baseFilename, uint16_t const &maxFiles) -> spdlog::sink_ptr
+auto genFromDailyStr(SinkConfig const &sink) -> spdlog::sink_ptr
 {
-    if (typeStr == "daily_file_sink_st") {
-        return createDailyFileSinkStPtr(std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
+    if (sink.type == "daily_file_sink_st") {
+        return createDailyFileSinkStPtr(sink);
     }
-    if (typeStr == "daily_file_sink_mt") {
-        return createDailyFileSinkMtPtr(std::move(sinkTable), truncate, std::move(baseFilename), maxFiles);
+    if (sink.type == "daily_file_sink_mt") {
+        return createDailyFileSinkMtPtr(sink);
     }
 
     return nullptr;
 }
 
-auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr
+auto genFromNullOrStdStr(SinkConfig const &sink) -> spdlog::sink_ptr
 {
+    auto const &typeStr = sink.type;
+
     if (typeStr == "null_sink_st" || typeStr == "null_sink_mt") {
         return createNullSinkPtr();
     }
@@ -191,20 +200,22 @@ auto genFromNullOrStdStr(toml::string &&typeStr) -> spdlog::sink_ptr
 }
 
 #ifdef __linux__
-auto genFromLinuxStr(toml::string &&typeStr, toml::table &&sinkTable) -> spdlog::sink_ptr
+auto genFromLinuxStr(SinkConfig const &sink) -> spdlog::sink_ptr
 {
-    if (typeStr == "syslog_sink_st") {
-        return createSyslogSinkStPtr(std::move(sinkTable));
+    if (sink.type == "syslog_sink_st") {
+        return createSyslogSinkStPtr(sink);
     }
-    if (typeStr == "syslog_sink_mt") {
-        return createSyslogSinkMtPtr(std::move(sinkTable));
+    if (sink.type == "syslog_sink_mt") {
+        return createSyslogSinkMtPtr(sink);
     }
 
     return nullptr;
 }
 #elif _WIN32
-auto genFromWinStr(toml::string &&typeStr) -> spdlog::sink_ptr
+auto genFromWinStr(SinkConfig const &sink) -> spdlog::sink_ptr
 {
+    auto const &typeStr = sink.type;
+
     if (typeStr == "msvc_sink_st") {
         return createMsvcSinkStPtr();
     }

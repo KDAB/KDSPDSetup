@@ -12,7 +12,7 @@ include(FetchContent)
 include(CMakeFindDependencyMacro)
 
 find_dependency(spdlog)
-find_dependency(toml11)
+find_dependency(reflectcpp)
 
 if(KDSPDSETUP_BUILD_TESTS)
     find_dependency(doctest)

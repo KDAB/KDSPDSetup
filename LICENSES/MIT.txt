@@ -10,9 +10,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -- NOTE: Third party dependencies used by this software --
 This software depends on the spdlog lib (MIT License)
-and the toml11 lib (MIT License),
+and the reflect-cpp lib (MIT License),
 and the test suite depends on the doctest lib (MIT License).
 Users must comply to their licenses:
 https://github.com/gabime/spdlog/blob/v1.x/LICENSE
-https://github.com/ToruNiina/toml11/blob/master/LICENSE
+https://github.com/munich-data-engineering/reflect-cpp/blob/main/LICENSE
 https://github.com/doctest/doctest/blob/master/LICENSE.txt

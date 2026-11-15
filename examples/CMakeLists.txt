@@ -8,6 +8,8 @@
 #
 project(example LANGUAGES CXX)
 configure_file(example.toml example.toml)
+configure_file(example.json example.json)
+configure_file(example.yaml example.yaml)
 add_executable(
     example
     main.cpp

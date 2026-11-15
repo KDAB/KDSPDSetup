@@ -1,0 +1,40 @@
+global_pattern = "[%l] %v"
+
+[[sink]]
+name = "console"
+type = "stdout_sink_mt"
+level = "debug"
+
+[[sink]]
+name = "rotate"
+type = "rotating_file_sink_mt"
+base_filename = "log/rotate.log"
+max_size = "1M"
+max_files = 3
+truncate = true
+
+[[pattern]]
+name = "succient"
+value = "succient"
+
+[global_thread_pool]
+queue_size = 8192
+num_threads = 1
+
+[[thread_pool]]
+name = "tp"
+queue_size = 4096
+num_threads = 2
+
+[[logger]]
+name = "root"
+sinks = ["console"]
+level = "info"
+
+[[logger]]
+name = "async_logger"
+type = "async"
+sinks = ["rotate"]
+pattern = "succient"
+thread_pool = "tp"
+overflow_policy = "overrun_oldest"
